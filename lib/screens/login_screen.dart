@@ -12,10 +12,22 @@ class LoginPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+
+            Image.asset(
+              'lib/assets/fit_panther.png',
+              width: 250,
+              height: 200,
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(20),
+            ),
+
             Card(
               color: Theme.of(context).colorScheme.primary,
+              elevation: 0,
               child: Text(
-                'PDH Recommendations',
+                'Panther Dining Recommendations',
                 textAlign: TextAlign.center,
                 style: style!.copyWith(
                   color: Theme.of(context).colorScheme.onPrimary,
@@ -32,37 +44,49 @@ class LoginPage extends StatelessWidget {
               padding: const EdgeInsets.all(20),
             ),
 
-            Image.asset(
-              'lib/assets/fit-seal.png',
-              width: 250,
-              height: 200,
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(20),
+            TextField(
+              textAlign: TextAlign.left,
+              decoration: InputDecoration(
+                labelText: 'example@fit.edu',
+                fillColor: Colors.white,
+                filled: true,
+              ),
             ),
 
             TextField(
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left,
               decoration: InputDecoration(
-                labelText: 'Student ID',
+                labelText: 'TRACKS Password',
+                fillColor: Colors.white,
+                filled: true,
               ),
             ),
 
-            BirthdayDropdown(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Forgot Password?',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    ),
+                  ),
 
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => NavigationController()),
-                );
-              }, 
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-              ),
-              child: Text('Login', textAlign: TextAlign.center),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => NavigationController()),
+                    );
+                  }, 
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+                  ),
+                  child: Text('Login', textAlign: TextAlign.center),
+                ),
+              ],
             )
           ],
         ),

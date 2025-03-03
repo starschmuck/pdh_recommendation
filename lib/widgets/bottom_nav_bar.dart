@@ -11,9 +11,10 @@ class BottomNavBar extends StatelessWidget {
     return BottomNavigationBar(
       items: const <BottomNavigationBarItem> [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+        BottomNavigationBarItem(icon: Icon(Icons.reorder), label: 'Dashboard'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        BottomNavigationBarItem(icon: Icon(Icons.logout), label: 'Logout'),
       ],
       currentIndex: currentIndex,
       onTap: onTap,

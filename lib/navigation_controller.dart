@@ -3,6 +3,8 @@ import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/search_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
 class NavigationController extends StatefulWidget {
@@ -17,19 +19,13 @@ class _NavigationControllerState extends State<NavigationController> {
 
   final List<Widget> _pages = [
     HomePage(),
+    SearchPage(),
+    DashboardPage(),
     ProfilePage(),
     SettingsPage(),
   ];
 
   void _onNavBarTapped(int index) {
-
-    if (index == 3) {
-      // Handle logout by navigating to login page
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
-      return;
-    }
     setState(() {
       _currentIndex = index;
     });

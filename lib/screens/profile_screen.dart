@@ -5,6 +5,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Profile Page')),
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: Center(
         child: Text('Welcome to the Profile Page!'),
         ),
