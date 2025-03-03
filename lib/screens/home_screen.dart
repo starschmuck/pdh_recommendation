@@ -10,9 +10,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Access the app state
     final appState = Provider.of<MyAppState>(context);
-    
-    // Theme color - maroon from screenshot
-    final maroonColor = Color(0xFF7A2828);
+
     
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -61,7 +59,7 @@ class HomePage extends StatelessWidget {
       // Keep the refresh functionality from original code
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.refresh),
-        backgroundColor: maroonColor,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         onPressed: () {
           // Manually refresh data
           appState.fetchData();
