@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
+import 'review_screen.dart';
 import '../widgets/review_card.dart';
 import '../widgets/suggestion_card.dart';
 import '../widgets/action_button.dart';
@@ -58,11 +59,14 @@ class HomePage extends StatelessWidget {
             ),
       // Keep the refresh functionality from original code
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.refresh),
+        child: Icon(Icons.add),
         backgroundColor: Theme.of(context).colorScheme.primary,
         onPressed: () {
           // Manually refresh data
-          appState.fetchData();
+          Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => ReviewPage()),
+                    );
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
