@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pdh_recommendation/navigation_controller.dart';
+import 'package:pdh_recommendation/screens/signup_screen.dart';
 import 'home_screen.dart';
 
 class LoginPage extends StatelessWidget {
@@ -65,12 +66,22 @@ class LoginPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Forgot Password?',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context, 
+                      MaterialPageRoute(builder: (context) => SignupPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: EdgeInsets.symmetric(horizontal: 8)
+
                   ),
+                  child: Text('Create Account', textAlign: TextAlign.center),
+                ),
 
                 ElevatedButton(
                   onPressed: () {
@@ -82,7 +93,8 @@ class LoginPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.primary,
                     backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: EdgeInsets.symmetric(horizontal: 1)
                   ),
                   child: Text('Login', textAlign: TextAlign.center),
                 ),

@@ -26,7 +26,7 @@ class DashboardPage extends StatelessWidget {
                         child: Text(
                           'What\'s Tasty Today?',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold
                           )
                         ),
@@ -68,7 +68,7 @@ class DashboardPage extends StatelessWidget {
                         child: Text(
                           'How am I ranked?',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold
                           )
                         ),

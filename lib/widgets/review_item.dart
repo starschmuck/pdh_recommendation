@@ -29,7 +29,7 @@ class ReviewItem extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(width: 4.0),
-            StarRating(rating: stars),
+            StarRating(rating: stars.toDouble()),
             SizedBox(width: 4.0),
             Text(
               ratingText,

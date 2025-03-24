@@ -16,7 +16,7 @@ class SuggestionItem extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: Text(title)),
-        StarRating(rating: stars),
+        StarRating(rating: stars.toDouble()),
       ],
     );
   }
