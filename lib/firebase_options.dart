@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -66,6 +57,38 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://tasteful-panthers-default-rtdb.firebaseio.com',
     storageBucket: 'tasteful-panthers.firebasestorage.app',
     iosBundleId: 'com.example.pdhRecommendation',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBo-RYiAQ24pu0lBh00iW_JDLEbtx0ZBNc',
+    appId: '1:818307287307:web:a92185d4920979e3733a0e',
+    messagingSenderId: '818307287307',
+    projectId: 'tasteful-panthers',
+    authDomain: 'tasteful-panthers.firebaseapp.com',
+    databaseURL: 'https://tasteful-panthers-default-rtdb.firebaseio.com',
+    storageBucket: 'tasteful-panthers.firebasestorage.app',
+    measurementId: 'G-KQYBDMJELB',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyBtPKktdoFMp1Dys6vvC6AJ3jucvHHFH7I',
+    appId: '1:818307287307:ios:12ec0e1fe1e40762733a0e',
+    messagingSenderId: '818307287307',
+    projectId: 'tasteful-panthers',
+    databaseURL: 'https://tasteful-panthers-default-rtdb.firebaseio.com',
+    storageBucket: 'tasteful-panthers.firebasestorage.app',
+    iosBundleId: 'com.example.pdhRecommendation',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBo-RYiAQ24pu0lBh00iW_JDLEbtx0ZBNc',
+    appId: '1:818307287307:web:54e18a55d22b6ce2733a0e',
+    messagingSenderId: '818307287307',
+    projectId: 'tasteful-panthers',
+    authDomain: 'tasteful-panthers.firebaseapp.com',
+    databaseURL: 'https://tasteful-panthers-default-rtdb.firebaseio.com',
+    storageBucket: 'tasteful-panthers.firebasestorage.app',
+    measurementId: 'G-ZY6KDMDCPM',
   );
 
 }

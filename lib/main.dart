@@ -7,16 +7,15 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
   final fitCrimson = Color.fromARGB(255, 119, 0, 0);
-  
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -25,7 +24,10 @@ class MyApp extends StatelessWidget {
         title: 'Namer App',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: fitCrimson, dynamicSchemeVariant: DynamicSchemeVariant.fidelity),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: fitCrimson,
+            dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+          ),
         ),
         home: MyHomePage(),
       ),
@@ -37,23 +39,23 @@ class MyAppState extends ChangeNotifier {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   Map<dynamic, dynamic>? _data;
   bool _isLoading = true;
-  
+
   // Getter for data
   Map<dynamic, dynamic>? get data => _data;
-  
+
   // Getter for loading state
   bool get isLoading => _isLoading;
-  
+
   MyAppState() {
     // Fetch data when state is initialized
     fetchData();
   }
-  
+
   // Fetches all data from the database
   Future<void> fetchData() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       DataSnapshot snapshot = await _database.get();
       if (snapshot.exists) {
@@ -70,7 +72,7 @@ class MyAppState extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Write data to a specific path
   Future<void> writeData(String path, dynamic value) async {
     try {
@@ -81,7 +83,7 @@ class MyAppState extends ChangeNotifier {
       print("Error writing data: $e");
     }
   }
-  
+
   // Update specific data
   Future<void> updateData(String path, Map<String, dynamic> updates) async {
     try {
@@ -92,7 +94,7 @@ class MyAppState extends ChangeNotifier {
       print("Error updating data: $e");
     }
   }
-  
+
   // Delete data at a specific path
   Future<void> deleteData(String path) async {
     try {
@@ -112,7 +114,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
-  
+
   @override
   Widget build(BuildContext context) {
     Widget page;
@@ -124,17 +126,12 @@ class _MyHomePageState extends State<MyHomePage> {
       default:
         throw UnimplementedError('no widget for selected index $selectedIndex');
     }
-    
+
     return Stack(
       children: [
-        Container(
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          body: page,
-        ),
-      ]
+        Container(color: Theme.of(context).colorScheme.primary),
+        Scaffold(backgroundColor: Colors.transparent, body: page),
+      ],
     );
   }
 }
