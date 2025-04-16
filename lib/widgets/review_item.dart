@@ -4,17 +4,15 @@ import 'star_rating.dart';
 class ReviewItem extends StatelessWidget {
   final String title;
   final int stars;
-  final String ratingText;
   final String reviewText;
-  final bool hasMoreButton;
+  final String reviewerName; // New parameter
 
   const ReviewItem({
     Key? key,
     required this.title,
     required this.stars,
-    required this.ratingText,
     required this.reviewText,
-    this.hasMoreButton = false,
+    required this.reviewerName, // New required parameter
   }) : super(key: key);
 
   @override
@@ -22,39 +20,26 @@ class ReviewItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Row for food name and star rating.
         Row(
           children: [
-            Text(
-              title,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(width: 4.0),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 4.0),
             StarRating(rating: stars.toDouble()),
-            SizedBox(width: 4.0),
-            Text(
-              ratingText,
-              style: TextStyle(fontSize: 12.0, color: Colors.grey),
-            ),
+            const SizedBox(width: 4.0),
           ],
         ),
-        SizedBox(height: 4.0),
+        const SizedBox(height: 4.0),
+        // Display reviewer name.
+        Text(
+          'by $reviewerName',
+          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12.0),
+        ),
+        const SizedBox(height: 4.0),
+        // Row for review text.
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(reviewText),
-            ),
-            if (hasMoreButton)
-              TextButton(
-                onPressed: () {
-                  // Handle see more action
-                },
-                child: Text(
-                  '(See more)',
-                  style: TextStyle(color: Colors.blue),
-                ),
-              ),
-          ],
+          children: [Expanded(child: Text(reviewText))],
         ),
       ],
     );

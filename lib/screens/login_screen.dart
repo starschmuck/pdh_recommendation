@@ -35,21 +35,24 @@ class _LoginPageState extends State<LoginPage> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userId', userCredential.user!.uid);
 
-        // Navigate to the NavigationController screen (i.e. proceed in the app).
+        // Check if the widget is still mounted before navigation.
+        if (!mounted) return;
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => NavigationController()),
         );
       } on FirebaseAuthException catch (e) {
-        // If login fails, display the error message in a SnackBar.
+        if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.message ?? 'Login failed.')));
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.toString())));
       } finally {
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
         });
