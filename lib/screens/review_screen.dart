@@ -49,7 +49,7 @@ String? getCurrentMealPeriod() {
   final lunchStart = breakfastEnd;
   final lunchEnd = 16 * 60 + 30;
   final dinnerStart = lunchEnd;
-  final dinnerEnd = 21 * 60 + 30;
+  final dinnerEnd = 23 * 60 + 30;
 
   if (currentMinutes >= breakfastStart && currentMinutes < breakfastEnd) {
     return 'breakfast';
@@ -64,6 +64,14 @@ String? getCurrentMealPeriod() {
 
 /// Capitalizes the first letter of the given string.
 String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
+
+/// Helper to get a formatted date string (yyyy-MM-dd) for today.
+String getTodayDateString() {
+  final now = DateTime.now();
+  return "${now.year.toString().padLeft(4, '0')}-"
+      "${now.month.toString().padLeft(2, '0')}-"
+      "${now.day.toString().padLeft(2, '0')}";
+}
 
 class ReviewPage extends StatefulWidget {
   @override
@@ -105,7 +113,6 @@ class _ReviewPageState extends State<ReviewPage> {
 
   /// Submits the review to Firestore.
   Future<void> submitReview() async {
-    // Check current meal period.
     final currentMealPeriod = getCurrentMealPeriod();
     if (currentMealPeriod == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,7 +120,6 @@ class _ReviewPageState extends State<ReviewPage> {
       );
       return;
     }
-    // Validate required fields.
     if (selectedMeal == null ||
         sliderValue == 0 ||
         selectedTags.isEmpty ||
@@ -125,31 +131,27 @@ class _ReviewPageState extends State<ReviewPage> {
     }
 
     String? imageUrl;
-    // Optionally upload the selected image (if any).
     if (image != null) {
       imageUrl = await uploadImage(File(image!.path));
     } else if (photo != null) {
       imageUrl = await uploadImage(File(photo!.path));
     }
 
-    // Construct review object.
     final reviewData = {
       'userId': FirebaseAuth.instance.currentUser?.uid,
       'meal': selectedMeal,
       'rating': sliderValue,
       'tags': selectedTags,
       'reviewText': reviewTextController.text.trim(),
-      'imageUrl': imageUrl, // May be null if no image selected.
+      'imageUrl': imageUrl,
       'timestamp': FieldValue.serverTimestamp(),
     };
 
-    // Submit the review to Firestore.
     try {
       await FirebaseFirestore.instance.collection('reviews').add(reviewData);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Review submitted!")));
-      // Optionally clear the form here.
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -159,9 +161,26 @@ class _ReviewPageState extends State<ReviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Access the app state.
     final appState = Provider.of<MyAppState>(context);
     final currentMealPeriod = getCurrentMealPeriod();
+    final String todayDate = getTodayDateString();
+
+    // Build the Firestore query and get the path string for debugging.
+    final mealsCollectionRef = FirebaseFirestore.instance
+        .collection('meals')
+        .doc(todayDate)
+        .collection('meals');
+
+    final String queryPath = mealsCollectionRef.path;
+    final String filterMealType =
+        currentMealPeriod != null ? capitalize(currentMealPeriod) : '';
+
+    print(
+      "Querying Firestore at path: $queryPath with meal_type: $filterMealType",
+    );
+
+    final Future<QuerySnapshot> queryFuture =
+        mealsCollectionRef.where('meal_type', isEqualTo: filterMealType).get();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -190,7 +209,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              // Food Selection: Either a dropdown if open, or a closed message.
                               currentMealPeriod == null
                                   ? Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -203,31 +221,57 @@ class _ReviewPageState extends State<ReviewPage> {
                                     ),
                                   )
                                   : FutureBuilder<QuerySnapshot>(
-                                    future:
-                                        FirebaseFirestore.instance
-                                            .collection('meals')
-                                            .where(
-                                              'meal_type',
-                                              isEqualTo: capitalize(
-                                                currentMealPeriod,
-                                              ),
-                                            )
-                                            .get(),
+                                    future: queryFuture,
                                     builder: (context, snapshot) {
-                                      if (!snapshot.hasData) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        print("Waiting for Firestore query...");
                                         return Center(
                                           child: CircularProgressIndicator(),
                                         );
                                       }
-                                      // Extract meal names (or IDs) from documents.
-                                      final meals = snapshot.data!.docs;
+                                      if (snapshot.hasError) {
+                                        print(
+                                          "Firestore query error: ${snapshot.error}",
+                                        );
+                                        return Center(
+                                          child: Text(
+                                            "Error: ${snapshot.error.toString()}",
+                                          ),
+                                        );
+                                      }
+                                      if (!snapshot.hasData) {
+                                        print(
+                                          "No data received from Firestore.",
+                                        );
+                                        return Center(
+                                          child: Text("No meals found."),
+                                        );
+                                      }
+                                      // Debug: Print out the number of documents retrieved.
+                                      final docs = snapshot.data!.docs;
+                                      print(
+                                        "Received ${docs.length} documents from Firestore.",
+                                      );
+                                      docs.forEach((doc) {
+                                        print(
+                                          "Doc ID: ${doc.id} | Data: ${doc.data()}",
+                                        );
+                                      });
+
                                       return DropdownButton<String>(
                                         hint: Text("Select a meal"),
                                         value: selectedMeal,
+                                        isExpanded: true,
                                         items:
-                                            meals.map((doc) {
+                                            docs.map((doc) {
+                                              final data =
+                                                  doc.data()
+                                                      as Map<String, dynamic>;
                                               final mealName =
-                                                  doc['name'] as String;
+                                                  data.containsKey('name')
+                                                      ? data['name'] as String
+                                                      : doc.id;
                                               return DropdownMenuItem<String>(
                                                 value: mealName,
                                                 child: Text(mealName),
@@ -241,7 +285,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                       );
                                     },
                                   ),
-                              // Star Rating Section
                               Padding(
                                 padding: const EdgeInsets.only(top: 16.0),
                                 child: Row(
@@ -287,7 +330,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                   ),
                                 ),
                               ),
-                              // Horizontal Tag Selection System
                               Padding(
                                 padding: const EdgeInsets.only(top: 16.0),
                                 child: SizedBox(
@@ -321,7 +363,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                 ),
                               ),
                               SizedBox(height: 16.0),
-                              // Review Text Field with Controller
                               TextField(
                                 controller: reviewTextController,
                                 decoration: InputDecoration(
@@ -330,7 +371,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                 ),
                                 maxLines: 3,
                               ),
-                              // Photo and Image Upload Controls
                               Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Row(
@@ -384,7 +424,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                   ],
                                 ),
                               ),
-                              // Display Captured Photo/Image
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
@@ -433,7 +472,6 @@ class _ReviewPageState extends State<ReviewPage> {
                           ),
                         ),
                       ),
-                      // Submit Button
                       ElevatedButton(
                         onPressed: submitReview,
                         child: Text("Submit Review"),

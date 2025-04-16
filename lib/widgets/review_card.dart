@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+
 import 'review_item.dart';
 import '../models/review.dart';
 import '../services/review_service.dart';
 
+
 class ReviewCard extends StatelessWidget {
-  const ReviewCard({Key? key}) : super(key: key);
+  /// A list of review documents fetched from Firestore.
+  final List<QueryDocumentSnapshot> reviewDocs;
+
+  const ReviewCard({Key? key, required this.reviewDocs}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+
     return FutureBuilder<List<Review>>(
       // Load reviews using the service layer
       future: ReviewService.fetchAllReviews(),
@@ -52,6 +58,7 @@ class ReviewCard extends StatelessWidget {
           ),
         );
       },
+
     );
   }
 }
