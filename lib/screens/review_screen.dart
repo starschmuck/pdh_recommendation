@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdh_recommendation/screens/camera_screen.dart';
@@ -38,18 +40,15 @@ enum Food {
   );
 }
 
-/// Returns the current meal period based on the time.
-/// Breakfast: 7:30-10:30 AM, Lunch: 10:30-4:30 PM, Dinner: 4:30-9:30 PM.
-/// Outside of these hours returns null (hall closed).
 String? getCurrentMealPeriod() {
   final now = DateTime.now();
   final currentMinutes = now.hour * 60 + now.minute;
-  final breakfastStart = 7 * 60 + 30;
-  final breakfastEnd = 10 * 60 + 30;
-  final lunchStart = breakfastEnd;
-  final lunchEnd = 16 * 60 + 30;
-  final dinnerStart = lunchEnd;
-  final dinnerEnd = 23 * 60 + 30;
+  const breakfastStart = 7 * 60 + 30;
+  const breakfastEnd = 10 * 60 + 30;
+  const lunchStart = breakfastEnd;
+  const lunchEnd = 16 * 60 + 30;
+  const dinnerStart = lunchEnd;
+  const dinnerEnd = 23 * 60 + 30;
 
   if (currentMinutes >= breakfastStart && currentMinutes < breakfastEnd) {
     return 'breakfast';
@@ -58,14 +57,12 @@ String? getCurrentMealPeriod() {
   } else if (currentMinutes >= dinnerStart && currentMinutes < dinnerEnd) {
     return 'dinner';
   } else {
-    return null; // Dining hall closed
+    return null;
   }
 }
 
-/// Capitalizes the first letter of the given string.
 String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
 
-/// Helper to get a formatted date string (yyyy-MM-dd) for today.
 String getTodayDateString() {
   final now = DateTime.now();
   return "${now.year.toString().padLeft(4, '0')}-"
@@ -82,8 +79,8 @@ class _ReviewPageState extends State<ReviewPage> {
   XFile? image;
   XFile? photo;
   double sliderValue = .5;
+  bool _submitting = false;
 
-  // Define the available tags.
   final List<String> availableTags = [
     'Healthy',
     'Flavorful',
@@ -95,46 +92,109 @@ class _ReviewPageState extends State<ReviewPage> {
     'Comforting',
     'Refreshing',
   ];
-  // List of tags the user has selected.
   List<String> selectedTags = [];
-
-  // Holds the selected meal (retrieved from Firestore).
   String? selectedMeal;
-
-  // Controller for review text.
   final TextEditingController reviewTextController = TextEditingController();
 
-  /// Stub for image upload.
-  /// Replace with Firebase Storage integration as needed.
-  Future<String?> uploadImage(File file) async {
-    // Upload file to storage and return its URL.
-    return file.path; // Placeholder, returns local path.
+  @override
+  void initState() {
+    super.initState();
+    // Ensure Firebase is initialized
+    Firebase.initializeApp()
+        .then((_) {
+          print('✅ Firebase initialized');
+        })
+        .catchError((e) {
+          print('❌ Firebase.initializeApp error: $e');
+        });
   }
 
-  /// Submits the review to Firestore.
+  Future<String?> uploadImage(File file) async {
+    print("🛠️ uploadImage start for ${file.path}");
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+      final fileName = file.path.split('/').last;
+      final storagePath =
+          'reviews/$uid/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+
+      final ref = FirebaseStorage.instance.ref(storagePath);
+      final uploadTask = ref.putFile(file);
+
+      uploadTask.snapshotEvents.listen(
+        (snap) {
+          print(
+            "⬆️ state=${snap.state} "
+            "transferred=${snap.bytesTransferred}/${snap.totalBytes}",
+          );
+        },
+        onError: (e) {
+          print("⚠️ snapshotEvents error: $e");
+        },
+      );
+
+      final snapshot = await uploadTask.timeout(
+        Duration(seconds: 20),
+        onTimeout: () {
+          throw Exception("Upload timed out");
+        },
+      );
+      print("✅ uploadTask completed: ${snapshot.state}");
+      final url = await snapshot.ref.getDownloadURL();
+      print("🔗 downloadURL: $url");
+      return url;
+    } catch (e, st) {
+      print("❌ uploadImage error: $e\n$st");
+      return null;
+    }
+  }
+
   Future<void> submitReview() async {
+    print("🔔 submitReview called");
     final currentMealPeriod = getCurrentMealPeriod();
     if (currentMealPeriod == null) {
+      print("⚠️ Hall closed, aborting submitReview");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Panther Dining Hall is closed now.")),
       );
       return;
     }
+
     if (selectedMeal == null ||
         sliderValue == 0 ||
         selectedTags.isEmpty ||
         reviewTextController.text.trim().isEmpty) {
+      print(
+        "⚠️ Validation failed: "
+        "meal=$selectedMeal, rating=$sliderValue, "
+        "tags=${selectedTags.length}, textLength=${reviewTextController.text.trim().length}",
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Please fill in all required fields.")),
       );
       return;
     }
 
+    setState(() => _submitting = true);
+
     String? imageUrl;
-    if (image != null) {
-      imageUrl = await uploadImage(File(image!.path));
-    } else if (photo != null) {
-      imageUrl = await uploadImage(File(photo!.path));
+    try {
+      print("▶️ Starting image upload: image=$image, photo=$photo");
+      if (image != null) {
+        imageUrl = await uploadImage(File(image!.path));
+      } else if (photo != null) {
+        imageUrl = await uploadImage(File(photo!.path));
+      }
+      print("✅ uploadImage returned URL: $imageUrl");
+      if ((image != null || photo != null) && imageUrl == null) {
+        throw Exception("Image upload failed");
+      }
+    } catch (e) {
+      print("❌ uploadImage threw error: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Image upload failed: $e")));
+      setState(() => _submitting = false);
+      return;
     }
 
     final reviewData = {
@@ -146,16 +206,32 @@ class _ReviewPageState extends State<ReviewPage> {
       'imageUrl': imageUrl,
       'timestamp': FieldValue.serverTimestamp(),
     };
+    print("▶️ Writing review to Firestore: $reviewData");
 
     try {
-      await FirebaseFirestore.instance.collection('reviews').add(reviewData);
+      await FirebaseFirestore.instance
+          .collection('reviews')
+          .add(reviewData)
+          .timeout(Duration(seconds: 10));
+      print("✅ Firestore.add succeeded");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Review submitted!")));
+      setState(() {
+        image = null;
+        photo = null;
+        sliderValue = .5;
+        selectedTags.clear();
+        reviewTextController.clear();
+        selectedMeal = null;
+      });
     } catch (e) {
+      print("❌ Firestore.add error: $e");
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ).showSnackBar(SnackBar(content: Text("Error submitting review: $e")));
+    } finally {
+      setState(() => _submitting = false);
     }
   }
 
@@ -163,23 +239,16 @@ class _ReviewPageState extends State<ReviewPage> {
   Widget build(BuildContext context) {
     final appState = Provider.of<MyAppState>(context);
     final currentMealPeriod = getCurrentMealPeriod();
-    final String todayDate = getTodayDateString();
+    final todayDate = getTodayDateString();
 
-    // Build the Firestore query and get the path string for debugging.
     final mealsCollectionRef = FirebaseFirestore.instance
         .collection('meals')
         .doc(todayDate)
         .collection('meals');
-
-    final String queryPath = mealsCollectionRef.path;
-    final String filterMealType =
+    final filterMealType =
         currentMealPeriod != null ? capitalize(currentMealPeriod) : '';
 
-    print(
-      "Querying Firestore at path: $queryPath with meal_type: $filterMealType",
-    );
-
-    final Future<QuerySnapshot> queryFuture =
+    final queryFuture =
         mealsCollectionRef.where('meal_type', isEqualTo: filterMealType).get();
 
     return Scaffold(
@@ -189,16 +258,16 @@ class _ReviewPageState extends State<ReviewPage> {
               ? Center(child: CircularProgressIndicator(color: Colors.white))
               : SafeArea(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Card(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -209,262 +278,214 @@ class _ReviewPageState extends State<ReviewPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              currentMealPeriod == null
-                                  ? Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16.0,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        "Panther Dining Hall is closed",
-                                      ),
-                                    ),
-                                  )
-                                  : FutureBuilder<QuerySnapshot>(
-                                    future: queryFuture,
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        print("Waiting for Firestore query...");
-                                        return Center(
-                                          child: CircularProgressIndicator(),
-                                        );
-                                      }
-                                      if (snapshot.hasError) {
-                                        print(
-                                          "Firestore query error: ${snapshot.error}",
-                                        );
-                                        return Center(
-                                          child: Text(
-                                            "Error: ${snapshot.error.toString()}",
-                                          ),
-                                        );
-                                      }
-                                      if (!snapshot.hasData) {
-                                        print(
-                                          "No data received from Firestore.",
-                                        );
-                                        return Center(
-                                          child: Text("No meals found."),
-                                        );
-                                      }
-                                      // Debug: Print out the number of documents retrieved.
-                                      final docs = snapshot.data!.docs;
-                                      print(
-                                        "Received ${docs.length} documents from Firestore.",
-                                      );
-                                      docs.forEach((doc) {
-                                        print(
-                                          "Doc ID: ${doc.id} | Data: ${doc.data()}",
-                                        );
-                                      });
 
-                                      return DropdownButton<String>(
-                                        hint: Text("Select a meal"),
-                                        value: selectedMeal,
-                                        isExpanded: true,
-                                        items:
-                                            docs.map((doc) {
-                                              final data =
-                                                  doc.data()
-                                                      as Map<String, dynamic>;
-                                              final mealName =
-                                                  data.containsKey('name')
-                                                      ? data['name'] as String
-                                                      : doc.id;
-                                              return DropdownMenuItem<String>(
-                                                value: mealName,
-                                                child: Text(mealName),
-                                              );
-                                            }).toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            selectedMeal = value;
-                                          });
-                                        },
-                                      );
-                                    },
+                              if (currentMealPeriod == null)
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: Text("Dining Hall closed"),
                                   ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 16.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: List.generate(5, (index) {
-                                    IconData iconData;
-                                    Color color;
-
-                                    if (sliderValue >= index + 1) {
-                                      iconData = Icons.star;
-                                      color = Colors.amber;
-                                    } else if (sliderValue >= index + 0.5) {
-                                      iconData = Icons.star_half;
-                                      color = Colors.amber;
-                                    } else {
-                                      iconData = Icons.star_border;
-                                      color = Colors.grey;
+                                )
+                              else
+                                FutureBuilder<QuerySnapshot>(
+                                  future: queryFuture,
+                                  builder: (ctx, snap) {
+                                    if (snap.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Center(
+                                        child: CircularProgressIndicator(),
+                                      );
                                     }
-                                    return Icon(
-                                      iconData,
-                                      color: color,
-                                      size: 32,
+                                    if (snap.hasError || !snap.hasData) {
+                                      return Center(
+                                        child: Text(
+                                          "Error loading meals: ${snap.error ?? 'no data'}",
+                                        ),
+                                      );
+                                    }
+                                    final docs = snap.data!.docs;
+                                    final sorted =
+                                        docs.toList()..sort((a, b) {
+                                          final dataA =
+                                              a.data() as Map<String, dynamic>;
+                                          final dataB =
+                                              b.data() as Map<String, dynamic>;
+                                          final nameA =
+                                              (dataA['name'] as String?) ??
+                                              a.id;
+                                          final nameB =
+                                              (dataB['name'] as String?) ??
+                                              b.id;
+                                          return nameA.compareTo(nameB);
+                                        });
+
+                                    return DropdownButton<String>(
+                                      hint: Text("Select a meal"),
+                                      value: selectedMeal,
+                                      isExpanded: true,
+                                      items:
+                                          sorted.map((doc) {
+                                            final data =
+                                                doc.data()
+                                                    as Map<String, dynamic>;
+                                            final mealName =
+                                                data['name'] as String? ??
+                                                doc.id;
+                                            return DropdownMenuItem<String>(
+                                              value: mealName,
+                                              child: Text(mealName),
+                                            );
+                                          }).toList(),
+                                      onChanged:
+                                          (val) => setState(
+                                            () => selectedMeal = val,
+                                          ),
                                     );
-                                  }),
+                                  },
                                 ),
+
+                              SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(5, (i) {
+                                  final icon =
+                                      sliderValue >= i + 1
+                                          ? Icons.star
+                                          : sliderValue >= i + 0.5
+                                          ? Icons.star_half
+                                          : Icons.star_border;
+                                  return Icon(icon, size: 32);
+                                }),
                               ),
                               Slider(
                                 max: 5,
                                 divisions: 10,
                                 value: sliderValue,
-                                onChanged: (double value) {
-                                  setState(() {
-                                    sliderValue = value;
-                                  });
-                                },
+                                onChanged:
+                                    _submitting
+                                        ? null
+                                        : (v) =>
+                                            setState(() => sliderValue = v),
                               ),
                               Center(
                                 child: Text(
                                   'Rating: $sliderValue Stars',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 16.0),
-                                child: SizedBox(
-                                  height: 40.0,
-                                  child: ListView(
-                                    scrollDirection: Axis.horizontal,
-                                    children:
-                                        availableTags.map((tag) {
-                                          bool isSelected = selectedTags
-                                              .contains(tag);
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 4.0,
-                                            ),
-                                            child: ChoiceChip(
-                                              label: Text(tag),
-                                              selected: isSelected,
-                                              onSelected: (selected) {
-                                                setState(() {
-                                                  if (selected) {
-                                                    selectedTags.add(tag);
-                                                  } else {
-                                                    selectedTags.remove(tag);
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                          );
-                                        }).toList(),
-                                  ),
+
+                              SizedBox(height: 16),
+                              SizedBox(
+                                height: 40,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children:
+                                      availableTags.map((tag) {
+                                        final sel = selectedTags.contains(tag);
+                                        return Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                          child: ChoiceChip(
+                                            label: Text(tag),
+                                            selected: sel,
+                                            onSelected:
+                                                _submitting
+                                                    ? null
+                                                    : (s) => setState(
+                                                      () =>
+                                                          s
+                                                              ? selectedTags
+                                                                  .add(tag)
+                                                              : selectedTags
+                                                                  .remove(tag),
+                                                    ),
+                                          ),
+                                        );
+                                      }).toList(),
                                 ),
                               ),
-                              SizedBox(height: 16.0),
+
+                              SizedBox(height: 16),
                               TextField(
                                 controller: reviewTextController,
                                 decoration: InputDecoration(
-                                  hintText: "Write a review...",
+                                  hintText: "Write a review…",
                                   border: OutlineInputBorder(),
                                 ),
                                 maxLines: 3,
+                                enabled: !_submitting,
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(width: 1.5),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8.0,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Icon(Icons.camera_alt),
-                                        onPressed: () async {
-                                          final XFile? pickedPhoto =
-                                              await imagePicker.pickImage(
-                                                source: ImageSource.camera,
-                                              );
-                                          setState(() {
-                                            photo = pickedPhoto;
-                                          });
-                                        },
-                                      ),
+
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed:
+                                          _submitting
+                                              ? null
+                                              : () async {
+                                                final p = await imagePicker
+                                                    .pickImage(
+                                                      source:
+                                                          ImageSource.camera,
+                                                    );
+                                                setState(() => photo = p);
+                                              },
+                                      child: Icon(Icons.camera_alt),
                                     ),
-                                    SizedBox(width: 8.0),
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(width: 1.5),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8.0,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Icon(Icons.image),
-                                        onPressed: () async {
-                                          final XFile? pickedImage =
-                                              await imagePicker.pickImage(
-                                                source: ImageSource.gallery,
-                                              );
-                                          setState(() {
-                                            image = pickedImage;
-                                          });
-                                        },
-                                      ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed:
+                                          _submitting
+                                              ? null
+                                              : () async {
+                                                final i = await imagePicker
+                                                    .pickImage(
+                                                      source:
+                                                          ImageSource.gallery,
+                                                    );
+                                                setState(() => image = i);
+                                              },
+                                      child: Icon(Icons.image),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
+
+                              SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   if (photo != null)
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        children: [
-                                          Text('Photo Taken:'),
-                                          SizedBox(height: 8.0),
-                                          Container(
-                                            constraints: BoxConstraints(
-                                              maxWidth: 100,
-                                              maxHeight: 100,
-                                            ),
-                                            child: Image.file(
-                                              File(photo!.path),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    Column(
+                                      children: [
+                                        Text('Photo Taken'),
+                                        SizedBox(height: 8),
+                                        Image.file(
+                                          File(photo!.path),
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ],
                                     ),
                                   if (image != null)
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        children: [
-                                          Text('Image Selected:'),
-                                          SizedBox(height: 8.0),
-                                          Container(
-                                            constraints: BoxConstraints(
-                                              maxWidth: 100,
-                                              maxHeight: 100,
-                                            ),
-                                            child: Image.file(
-                                              File(image!.path),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    Column(
+                                      children: [
+                                        Text('Image Selected'),
+                                        SizedBox(height: 8),
+                                        Image.file(
+                                          File(image!.path),
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ],
                                     ),
                                 ],
                               ),
@@ -472,9 +493,21 @@ class _ReviewPageState extends State<ReviewPage> {
                           ),
                         ),
                       ),
+
+                      SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: submitReview,
-                        child: Text("Submit Review"),
+                        onPressed: _submitting ? null : submitReview,
+                        child:
+                            _submitting
+                                ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : Text("Submit Review"),
                       ),
                     ],
                   ),
@@ -482,12 +515,9 @@ class _ReviewPageState extends State<ReviewPage> {
               ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Theme.of(context).colorScheme.primary,
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
+        onPressed: () => Navigator.of(context).pop(),
         child: Icon(Icons.arrow_back),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

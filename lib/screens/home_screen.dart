@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pdh_recommendation/widgets/review_popup.dart';
+import 'package:pdh_recommendation/widgets/suggestion_popup.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart';
@@ -15,12 +17,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Controls whether the extra floating buttons are visible.
   bool _isFabExpanded = false;
-
-  // Stream for reviews.
   late final Stream<QuerySnapshot> _reviewsStream;
-  // New: Stream for suggestions.
   late final Stream<QuerySnapshot> _suggestionsStream;
 
   @override
@@ -34,6 +32,7 @@ class _HomePageState extends State<HomePage> {
             .collection('reviews')
             .where('timestamp', isGreaterThanOrEqualTo: weekAgo)
             .orderBy('timestamp', descending: true)
+            .limit(5)
             .snapshots();
 
     _suggestionsStream =
@@ -41,6 +40,7 @@ class _HomePageState extends State<HomePage> {
             .collection('suggestions')
             .where('timestamp', isGreaterThanOrEqualTo: weekAgo)
             .orderBy('timestamp', descending: true)
+            .limit(5)
             .snapshots();
   }
 
@@ -52,10 +52,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Define the desired FAB color.
     final Color fitCrimson = const Color.fromARGB(255, 119, 0, 0);
-
-    // Access the app state (for a global loading flag, etc.)
     final appState = Provider.of<MyAppState>(context);
 
     return Scaffold(
@@ -69,7 +66,6 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Reviews Section via a StreamBuilder.
                       StreamBuilder<QuerySnapshot>(
                         stream: _reviewsStream,
                         builder: (context, snapshot) {
@@ -92,12 +88,11 @@ class _HomePageState extends State<HomePage> {
                               child: Text("No reviews this week."),
                             );
                           }
-                          // Pass the docs directly to ReviewCard.
-                          return ReviewCard(reviewDocs: snapshot.data!.docs);
+                          final docs = snapshot.data!.docs;
+                          return ReviewCard(reviewDocs: docs);
                         },
                       ),
                       const SizedBox(height: 16.0),
-                      // Suggestions Section via a StreamBuilder.
                       StreamBuilder<QuerySnapshot>(
                         stream: _suggestionsStream,
                         builder: (context, snapshot) {
@@ -120,11 +115,8 @@ class _HomePageState extends State<HomePage> {
                               child: Text("No suggestions this week."),
                             );
                           }
-                          // Pass the docs directly to SuggestionCard.
-                          // Ensure SuggestionCard accepts a parameter like `suggestionDocs`.
-                          return SuggestionCard(
-                            suggestionDocs: snapshot.data!.docs,
-                          );
+                          final docs = snapshot.data!.docs;
+                          return SuggestionCard(suggestionDocs: docs);
                         },
                       ),
                     ],
@@ -135,7 +127,6 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          // "Review" extended FAB.
           AnimatedPositioned(
             duration: Duration(milliseconds: 200),
             right: 16.0,
@@ -161,7 +152,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // "Guess" extended FAB.
           AnimatedPositioned(
             duration: Duration(milliseconds: 200),
             right: 16.0,
@@ -175,7 +165,6 @@ class _HomePageState extends State<HomePage> {
                   heroTag: 'guess',
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   onPressed: () {
-                    // Placeholder for "Guess" functionality.
                     _toggleFab();
                   },
                   label: Text('Guess'),
@@ -184,7 +173,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // "Suggest" extended FAB.
           AnimatedPositioned(
             duration: Duration(milliseconds: 200),
             right: 16.0,
@@ -210,7 +198,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // Main toggle FAB - always visible.
           Positioned(
             right: 16.0,
             bottom: 16.0,

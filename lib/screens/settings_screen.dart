@@ -3,9 +3,55 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pdh_recommendation/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdh_recommendation/screens/login_screen.dart';
+import 'package:pdh_recommendation/screens/splash_screen.dart';
+import 'package:restart_app/restart_app.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({Key? key}) : super(key: key);
+
+  Future<void> _performFullLogout(BuildContext context) async {
+    try {
+      print('Logging out...');
+      // Firebase sign out
+      await FirebaseAuth.instance.signOut();
+
+      // Clear shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      print('Prefs Cleared');
+
+      // Navigate to splash screen or login screen
+      //navigatorKey.currentState?.pushAndRemoveUntil(
+      //  MaterialPageRoute(builder: (_) => SplashScreen()),
+      //  (route) => false,
+      //);
+
+      //Navigator.pushReplacement(
+      //  context,
+      //  MaterialPageRoute(builder: (_) => LoginPage()),
+      //);
+
+      // restart from main logic
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => MyApp()),
+        (route) => false,
+      );
+
+      /* 
+      Restart.restartApp(
+        notificationTitle: 'Logging out...',
+        //notificationBody: 'Logging out...',
+      );
+      */
+
+      print('Logged out successfully!');
+    } catch (e) {
+      print('❌ Error during logout: $e');
+      //ScaffoldMessenger.of(context).showSnackBar(
+      //  SnackBar(content: Text("Logout failed. Please try again.")),
+      //);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,17 +117,7 @@ class SettingsPage extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: TextButton(
-                      onPressed: () async {
-                        // Sign out from Firebase Authentication.
-                        await FirebaseAuth.instance.signOut();
-                        // Remove the stored user ID from SharedPreferences.
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.remove('userId');
-                        // Navigate to the LoginPage, replacing the current route.
-                        navigatorKey.currentState?.pushReplacement(
-                          MaterialPageRoute(builder: (_) => LoginPage()),
-                        );
-                      },
+                      onPressed: () => _performFullLogout(context),
                       child: Text('Log Out'),
                     ),
                   ),

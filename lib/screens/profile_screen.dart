@@ -45,6 +45,8 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
+
+                    // Recent Reviews
                     ExpansionTile(
                       title: const Text(
                         'My Recent Reviews',
@@ -54,7 +56,6 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ),
                       children: [
-                        // StreamBuilder to fetch recent reviews from Firestore for this user.
                         StreamBuilder<QuerySnapshot>(
                           stream:
                               FirebaseFirestore.instance
@@ -79,26 +80,23 @@ class ProfilePage extends StatelessWidget {
                                 child: Text('Error: ${snapshot.error}'),
                               );
                             }
-                            if (!snapshot.hasData ||
-                                snapshot.data!.docs.isEmpty) {
+                            final docs = snapshot.data?.docs ?? [];
+                            if (docs.isEmpty) {
                               return const Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: Text('No recent reviews.'),
                               );
                             }
-
-                            final docs = snapshot.data!.docs;
                             return Column(
                               children:
                                   docs.map((doc) {
                                     final data =
                                         doc.data() as Map<String, dynamic>;
                                     final String mealName =
-                                        data['meal'] ?? 'Unknown Meal';
-                                    // Convert the rating to a double (defaulting to 0.0 if missing)
+                                        data['meal'] ?? doc.id;
                                     final double rating =
                                         (data['rating'] != null)
-                                            ? data['rating'].toDouble()
+                                            ? (data['rating'] as num).toDouble()
                                             : 0.0;
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -125,7 +123,10 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 20),
+
+                    // Recent Suggestions
                     ExpansionTile(
                       title: const Text(
                         'My Recent Suggestions',
@@ -135,32 +136,70 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ),
                       children: [
-                        // Here you can add a similar StreamBuilder for suggestions if needed.
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text(
-                              'Suggestion 1',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            StarRating(rating: 0),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text(
-                              'Suggestion 2',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            StarRating(rating: 0.5),
-                          ],
+                        StreamBuilder<QuerySnapshot>(
+                          stream:
+                              FirebaseFirestore.instance
+                                  .collection('suggestions')
+                                  .where('userId', isEqualTo: user?.uid)
+                                  .orderBy('timestamp', descending: true)
+                                  .limit(5)
+                                  .snapshots(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text('Error: ${snapshot.error}'),
+                              );
+                            }
+                            final docs = snapshot.data?.docs ?? [];
+                            if (docs.isEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text('No recent suggestions.'),
+                              );
+                            }
+                            return Column(
+                              children:
+                                  docs.map((doc) {
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
+                                    final String suggestionText =
+                                        data['title'] ?? doc.id;
+                                    final double rating =
+                                        (data['rating'] != null)
+                                            ? (data['rating'] as num).toDouble()
+                                            : 0.0;
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            suggestionText,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          StarRating(rating: rating),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                            );
+                          },
                         ),
                       ],
                     ),

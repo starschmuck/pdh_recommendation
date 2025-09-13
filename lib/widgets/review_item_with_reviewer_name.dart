@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pdh_recommendation/widgets/review_popup.dart';
 import 'review_item.dart';
 
 class ReviewItemWithReviewerName extends StatefulWidget {
@@ -63,16 +64,23 @@ class _ReviewItemWithReviewerNameState
     final String reviewText = data['reviewText'] ?? '';
     final bool hasMoreButton = data['hasMoreButton'] ?? false;
 
-    return Column(
-      children: [
-        ReviewItem(
-          title: meal,
-          reviewerName: reviewerName,
-          stars: rating.toInt(),
-          reviewText: reviewText,
+    return GestureDetector(
+      onTap: () => showReviewPopup(context, widget.doc),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ReviewItem(
+              title: meal,
+              reviewerName: reviewerName,
+              stars: rating.toInt(),
+              reviewText: reviewText,
+            ),
+            const Divider(),
+          ],
         ),
-        const Divider(),
-      ],
+      ),
     );
   }
 }

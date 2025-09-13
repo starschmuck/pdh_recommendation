@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pdh_recommendation/widgets/star_rating.dart';
+import 'package:pdh_recommendation/widgets/suggestion_popup.dart';
 
 class SuggestionItem extends StatefulWidget {
   final QueryDocumentSnapshot doc;
@@ -57,46 +58,49 @@ class _SuggestionItemState extends State<SuggestionItem> {
         data['rating'] != null ? (data['rating'] as num).toDouble() : 0.0;
     final int stars = ratingDouble.toInt();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Row for suggestion title and star rating.
-          Row(
-            children: [
-              Text(
-                '$title',
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () => showSuggestionPopup(context, widget.doc),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Row for suggestion title and star rating.
+            Row(
+              children: [
+                Text(
+                  '$title',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 5),
-              StarRating(rating: 0.0),
-              const SizedBox(width: 5),
-            ],
-          ),
-          const SizedBox(height: 4.0),
-          // Display the submitter's name above the suggestion text.
-          Text(
-            'by $reviewerName',
-            style: const TextStyle(
-              color: Colors.black,
-              fontStyle: FontStyle.italic,
-              fontSize: 12.0,
+                const SizedBox(width: 5),
+                StarRating(rating: 0.0),
+                const SizedBox(width: 5),
+              ],
             ),
-          ),
-          const SizedBox(height: 4.0),
-          // Suggestion text (if provided).
-          if (suggestionText.isNotEmpty)
+            const SizedBox(height: 4.0),
+            // Display the submitter's name above the suggestion text.
             Text(
-              suggestionText,
-              style: const TextStyle(color: Colors.black, fontSize: 14),
+              'by $reviewerName',
+              style: const TextStyle(
+                color: Colors.black,
+                fontStyle: FontStyle.italic,
+                fontSize: 12.0,
+              ),
             ),
-          const Divider(),
-        ],
+            const SizedBox(height: 4.0),
+            // Suggestion text (if provided).
+            if (suggestionText.isNotEmpty)
+              Text(
+                suggestionText,
+                style: const TextStyle(color: Colors.black, fontSize: 14),
+              ),
+            const Divider(),
+          ],
+        ),
       ),
     );
   }

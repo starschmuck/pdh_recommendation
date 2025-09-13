@@ -13,44 +13,37 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   String _searchQuery = '';
 
-  // These lists will store the data fetched from Firestore.
   List<Map<String, dynamic>> _allReviews = [];
   List<Map<String, dynamic>> _allUsers = [];
-  // Suggestions remain empty for now.
-  final List<Map<String, dynamic>> _allSuggestions = [];
+  List<Map<String, dynamic>> _allSuggestions = [];
 
   @override
   void initState() {
     super.initState();
     _fetchReviews();
     _fetchUsers();
+    _fetchSuggestions();
   }
 
-  // Fetch reviews from the 'reviews' collection.
   void _fetchReviews() async {
     try {
       final snapshot =
           await FirebaseFirestore.instance.collection('reviews').get();
       setState(() {
-        // Map each document into a Map<String, dynamic>.
-        // Use the 'meal' field as the review title.
         _allReviews =
             snapshot.docs.map((doc) {
               final data = doc.data();
-              data['name'] = data['meal'] ?? ''; // Use meal field as title.
-              // Convert rating (which is stored as a double) to an int.
+              data['name'] = data['meal'] ?? '';
               data['rating'] =
                   data['rating'] != null ? (data['rating'] as num).toInt() : 0;
               return data;
             }).toList();
       });
     } catch (e) {
-      // You might want to handle the error more gracefully.
       print('Error fetching reviews: $e');
     }
   }
 
-  // Fetch users from the 'users' collection.
   void _fetchUsers() async {
     try {
       final snapshot =
@@ -68,9 +61,25 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  // Filtering functions based on the current search query.
-  // Since we override review['name'] with the meal field,
-  // this will search reviews by meal.
+  void _fetchSuggestions() async {
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('suggestions').get();
+      setState(() {
+        _allSuggestions =
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['name'] = data['title'] ?? '';
+              data['rating'] =
+                  data['rating'] != null ? (data['rating'] as num).toInt() : 0;
+              return data;
+            }).toList();
+      });
+    } catch (e) {
+      print('Error fetching suggestions: $e');
+    }
+  }
+
   List<Map<String, dynamic>> get _filteredReviews =>
       _allReviews
           .where(
@@ -110,7 +119,6 @@ class _SearchPageState extends State<SearchPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // The SearchBarWidget now notifies when the query changes.
                 SearchBarWidget(
                   onQueryChanged: (query) {
                     setState(() {
@@ -119,14 +127,12 @@ class _SearchPageState extends State<SearchPage> {
                   },
                 ),
                 const SizedBox(height: 12),
-                // Reviews section populated from Firestore.
                 SearchResultsSection(
                   title:
                       'Review Results for "${_searchQuery.isEmpty ? "" : _searchQuery}"',
                   items: _filteredReviews,
                 ),
                 const SizedBox(height: 12),
-                // Suggestions section (will be empty until data is added).
                 SearchResultsSection(
                   title:
                       'Suggestion Results for "${_searchQuery.isEmpty ? "" : _searchQuery}"',
@@ -134,7 +140,6 @@ class _SearchPageState extends State<SearchPage> {
                   hasNoResults: _filteredSuggestions.isEmpty,
                 ),
                 const SizedBox(height: 12),
-                // Users section populated from Firestore, with stars suppressed.
                 SearchResultsSection(
                   showStars: false,
                   title:
