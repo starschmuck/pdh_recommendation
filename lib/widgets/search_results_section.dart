@@ -7,6 +7,10 @@ class SearchResultsSection extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   final bool hasNoResults;
   final bool showStars; // New parameter to control star drawing
+  final bool enableRatingFilter;
+  final int selectedRating;
+  final ValueChanged<int?>? onRatingChanged;
+  final ValueChanged<Map<String, dynamic>>? onItemTap;
 
   const SearchResultsSection({
     Key? key,
@@ -14,6 +18,10 @@ class SearchResultsSection extends StatelessWidget {
     required this.items,
     this.hasNoResults = false,
     this.showStars = true,
+    this.enableRatingFilter = false,
+    this.selectedRating = 0,
+    this.onRatingChanged,
+    this.onItemTap,
   }) : super(key: key);
 
   @override
@@ -37,17 +45,22 @@ class SearchResultsSection extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              'Filter by:',
-              style: TextStyle(fontSize: 12, color: Colors.black87),
+          if (enableRatingFilter) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: const Text(
+                'Filter by rating:',
+                style: TextStyle(fontSize: 12, color: Colors.black87),
+              ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(10, 5, 10, 10),
-            child: FilterDropdown(),
-          ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 5, 10, 10),
+              child: FilterDropdown(
+                selectedRating: selectedRating,
+                onChanged: onRatingChanged ?? (_) {},
+              ),
+            ),
+          ],
           // No results message or list of results
           hasNoResults
               ? Padding(
@@ -70,6 +83,9 @@ class SearchResultsSection extends StatelessWidget {
                             // You might pass 0 or any value since ResultItem will check showStars.
                             rating: showStars ? (item['rating'] ?? 0) : 0,
                             showStars: showStars, // Pass the flag to ResultItem
+                            onTap: onItemTap != null
+                                ? () => onItemTap!(item)
+                                : null,
                           ),
                         )
                         .toList(),

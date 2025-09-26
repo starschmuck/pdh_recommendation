@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/search_bar.dart';
 import '../widgets/search_results_section.dart';
+import '../widgets/review_popup.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   String _searchQuery = '';
+  int _selectedRating = 0;
 
   List<Map<String, dynamic>> _allReviews = [];
   List<Map<String, dynamic>> _allUsers = [];
@@ -30,14 +32,15 @@ class _SearchPageState extends State<SearchPage> {
       final snapshot =
           await FirebaseFirestore.instance.collection('reviews').get();
       setState(() {
-        _allReviews =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['name'] = data['meal'] ?? '';
-              data['rating'] =
-                  data['rating'] != null ? (data['rating'] as num).toInt() : 0;
-              return data;
-            }).toList();
+        _allReviews = snapshot.docs.map((doc) {
+          final data = {...doc.data()};
+          data['name'] = data['meal'] ?? '';
+          data['rating'] =
+              data['rating'] != null ? (data['rating'] as num).toInt() : 0;
+          data['snapshot'] = doc;
+          data['docId'] = doc.id;
+          return data;
+        }).toList();
       });
     } catch (e) {
       print('Error fetching reviews: $e');
@@ -80,14 +83,25 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredReviews =>
-      _allReviews
-          .where(
-            (review) => review['name'].toString().toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ),
-          )
-          .toList();
+  List<Map<String, dynamic>> get _filteredReviews => _allReviews.where((review) {
+        final query = _searchQuery.toLowerCase();
+        final name = review['name']?.toString().toLowerCase() ?? '';
+        final tags = (review['tags'] as List?)
+                ?.map((e) => e.toString().toLowerCase())
+                .toList() ??
+            [];
+        final keywords = (review['keywords'] as List?)
+                ?.map((e) => e.toString().toLowerCase())
+                .toList() ??
+            [];
+        final matchesQuery = query.isEmpty ||
+            name.contains(query) ||
+            tags.any((tag) => tag.contains(query)) ||
+            keywords.any((kw) => kw.contains(query));
+        final matchesRating =
+            _selectedRating == 0 || (review['rating'] ?? 0) >= _selectedRating;
+        return matchesQuery && matchesRating;
+      }).toList();
 
   List<Map<String, dynamic>> get _filteredUsers =>
       _allUsers
@@ -131,6 +145,20 @@ class _SearchPageState extends State<SearchPage> {
                   title:
                       'Review Results for "${_searchQuery.isEmpty ? "" : _searchQuery}"',
                   items: _filteredReviews,
+                  hasNoResults: _filteredReviews.isEmpty,
+                  enableRatingFilter: true,
+                  selectedRating: _selectedRating,
+                  onRatingChanged: (value) {
+                    setState(() {
+                      _selectedRating = value ?? 0;
+                    });
+                  },
+                  onItemTap: (item) {
+                    final doc = item['snapshot'];
+                    if (doc is QueryDocumentSnapshot) {
+                      showReviewPopup(context, doc);
+                    }
+                  },
                 ),
                 const SizedBox(height: 12),
                 SearchResultsSection(
