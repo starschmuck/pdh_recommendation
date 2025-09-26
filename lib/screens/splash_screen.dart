@@ -4,7 +4,7 @@ import 'package:pdh_recommendation/screens/login_screen.dart';
 import 'package:pdh_recommendation/navigation_controller.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();

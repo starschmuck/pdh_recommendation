@@ -6,11 +6,11 @@ class ResultItem extends StatelessWidget {
   final bool showStars;
 
   const ResultItem({
-    Key? key,
+    super.key,
     required this.name,
     required this.rating,
     this.showStars = true, // defaults to true if not provided
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

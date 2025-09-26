@@ -9,13 +9,13 @@ class RankingTile extends StatelessWidget {
   
   // Constructor
   const RankingTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.rankPrefix,
     required this.rankSuffix,
     required this.additionalInfo,
     this.showVoteButton = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:pdh_recommendation/widgets/review_popup.dart';
-import 'package:pdh_recommendation/widgets/suggestion_popup.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart';
 import 'review_screen.dart';
 import '../widgets/review_card.dart';
 import '../widgets/suggestion_card.dart';
-import '../widgets/action_button.dart';
 import 'suggestion_screen.dart';
-import 'package:pdh_recommendation/widgets/star_rating.dart';
 
 class HomePage extends StatefulWidget {
   @override

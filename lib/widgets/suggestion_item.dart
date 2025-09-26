@@ -6,7 +6,7 @@ import 'package:pdh_recommendation/widgets/suggestion_popup.dart';
 class SuggestionItem extends StatefulWidget {
   final QueryDocumentSnapshot doc;
 
-  const SuggestionItem({Key? key, required this.doc}) : super(key: key);
+  const SuggestionItem({super.key, required this.doc});
 
   @override
   _SuggestionItemState createState() => _SuggestionItemState();
@@ -69,7 +69,7 @@ class _SuggestionItemState extends State<SuggestionItem> {
             Row(
               children: [
                 Text(
-                  '$title',
+                  title,
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 14,

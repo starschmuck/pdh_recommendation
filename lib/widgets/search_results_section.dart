@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdh_recommendation/widgets/review_item_with_reviewer_name.dart';
 import 'filter_dropdown.dart';
 import 'result_item.dart';
 
@@ -6,15 +7,17 @@ class SearchResultsSection extends StatelessWidget {
   final String title;
   final List<Map<String, dynamic>> items;
   final bool hasNoResults;
-  final bool showStars; // New parameter to control star drawing
+  final bool showStars; // parameter to control star drawing
+  final bool isReviewSection; 
 
   const SearchResultsSection({
-    Key? key,
+    super.key,
     required this.title,
     required this.items,
     this.hasNoResults = false,
     this.showStars = true,
-  }) : super(key: key);
+    this.isReviewSection = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -61,19 +64,19 @@ class SearchResultsSection extends StatelessWidget {
                 ),
               )
               : Column(
-                children:
-                    items
-                        .map(
-                          (item) => ResultItem(
-                            name: item['name'],
-                            // If stars aren't to be drawn, rating is irrelevant.
-                            // You might pass 0 or any value since ResultItem will check showStars.
-                            rating: showStars ? (item['rating'] ?? 0) : 0,
-                            showStars: showStars, // Pass the flag to ResultItem
-                          ),
-                        )
-                        .toList(),
-              ),
+                  children: items.map((item) {
+                    if (isReviewSection) {
+                      // 👇 assumes you stored the Firestore doc in fetchReviews
+                      return ReviewItemWithReviewerName(doc: item['doc']);
+                    } else {
+                      return ResultItem(
+                        name: item['name'],
+                        rating: showStars ? (item['rating'] ?? 0) : 0,
+                        showStars: showStars,
+                      );
+                    }
+                  }).toList(),
+                ),
           // Pagination indicator
           Container(
             alignment: Alignment.center,

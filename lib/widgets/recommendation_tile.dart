@@ -6,10 +6,10 @@ class RecommendationTile extends StatelessWidget {
   
   // Constructor
   const RecommendationTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.items,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +37,7 @@ class RecommendationTile extends StatelessWidget {
                 Icon(Icons.star, size: 14, color: Colors.yellow))),
               Text(" [See More]", style: TextStyle(color: Colors.blue.shade200)),
             ],
-          )).toList(),
+          )),
         ],
       ),
     );

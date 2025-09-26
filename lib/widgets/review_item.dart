@@ -8,12 +8,12 @@ class ReviewItem extends StatelessWidget {
   final String reviewerName; // New parameter
 
   const ReviewItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.stars,
     required this.reviewText,
     required this.reviewerName, // New required parameter
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

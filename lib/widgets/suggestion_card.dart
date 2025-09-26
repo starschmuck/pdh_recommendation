@@ -6,8 +6,7 @@ class SuggestionCard extends StatelessWidget {
   /// A list of suggestion documents fetched from Firestore.
   final List<QueryDocumentSnapshot> suggestionDocs;
 
-  const SuggestionCard({Key? key, required this.suggestionDocs})
-    : super(key: key);
+  const SuggestionCard({super.key, required this.suggestionDocs});
 
   @override
   Widget build(BuildContext context) {

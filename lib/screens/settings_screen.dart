@@ -7,7 +7,7 @@ import 'package:pdh_recommendation/screens/splash_screen.dart';
 import 'package:restart_app/restart_app.dart';
 
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({super.key});
 
   Future<void> _performFullLogout(BuildContext context) async {
     try {

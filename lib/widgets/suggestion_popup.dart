@@ -12,7 +12,7 @@ void showSuggestionPopup(BuildContext context, QueryDocumentSnapshot doc) {
 class SuggestionPopup extends StatefulWidget {
   final QueryDocumentSnapshot doc;
 
-  const SuggestionPopup({Key? key, required this.doc}) : super(key: key);
+  const SuggestionPopup({super.key, required this.doc});
 
   @override
   _SuggestionPopupState createState() => _SuggestionPopupState();

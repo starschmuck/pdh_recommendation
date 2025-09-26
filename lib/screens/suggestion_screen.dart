@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SuggestionPage extends StatefulWidget {
-  const SuggestionPage({Key? key}) : super(key: key);
+  const SuggestionPage({super.key});
 
   @override
   _SuggestionPageState createState() => _SuggestionPageState();

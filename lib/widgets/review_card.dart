@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'review_item_with_reviewer_name.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ReviewCard extends StatelessWidget {
   /// A list of review documents fetched from Firestore.
   final List<QueryDocumentSnapshot> reviewDocs;
 
-  const ReviewCard({Key? key, required this.reviewDocs}) : super(key: key);
+  const ReviewCard({super.key, required this.reviewDocs});
 
   @override
   Widget build(BuildContext context) {

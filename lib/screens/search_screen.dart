@@ -4,7 +4,7 @@ import '../widgets/search_bar.dart';
 import '../widgets/search_results_section.dart';
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({Key? key}) : super(key: key);
+  const SearchPage({super.key});
 
   @override
   _SearchPageState createState() => _SearchPageState();
@@ -30,19 +30,22 @@ class _SearchPageState extends State<SearchPage> {
       final snapshot =
           await FirebaseFirestore.instance.collection('reviews').get();
       setState(() {
-        _allReviews =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['name'] = data['meal'] ?? '';
-              data['rating'] =
-                  data['rating'] != null ? (data['rating'] as num).toInt() : 0;
-              return data;
-            }).toList();
+        _allReviews = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            ...data,
+            'id': doc.id,
+            'doc': doc, // keep the original snapshot
+            'name': data['meal'] ?? '',
+            'rating': data['rating'] != null ? (data['rating'] as num).toInt() : 0,
+          };
+        }).toList();
       });
     } catch (e) {
       print('Error fetching reviews: $e');
     }
   }
+
 
   void _fetchUsers() async {
     try {
@@ -131,6 +134,7 @@ class _SearchPageState extends State<SearchPage> {
                   title:
                       'Review Results for "${_searchQuery.isEmpty ? "" : _searchQuery}"',
                   items: _filteredReviews,
+                  isReviewSection: true,
                 ),
                 const SizedBox(height: 12),
                 SearchResultsSection(

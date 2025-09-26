@@ -13,7 +13,7 @@ void showReviewPopup(BuildContext context, QueryDocumentSnapshot doc) {
 class ReviewPopup extends StatefulWidget {
   final QueryDocumentSnapshot doc;
 
-  const ReviewPopup({Key? key, required this.doc}) : super(key: key);
+  const ReviewPopup({super.key, required this.doc});
 
   @override
   _ReviewPopupState createState() => _ReviewPopupState();

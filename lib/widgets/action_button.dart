@@ -6,11 +6,11 @@ class ActionButton extends StatelessWidget {
   final bool isBold;
 
   const ActionButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isBold = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
