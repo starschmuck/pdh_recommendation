@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/search_bar.dart';
 import '../widgets/search_results_section.dart';
+import '../widgets/review_popup.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({Key? key}) : super(key: key);
@@ -31,14 +32,15 @@ class _SearchPageState extends State<SearchPage> {
       final snapshot =
           await FirebaseFirestore.instance.collection('reviews').get();
       setState(() {
-        _allReviews =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['name'] = data['meal'] ?? '';
-              data['rating'] =
-                  data['rating'] != null ? (data['rating'] as num).toInt() : 0;
-              return data;
-            }).toList();
+        _allReviews = snapshot.docs.map((doc) {
+          final data = {...doc.data()};
+          data['name'] = data['meal'] ?? '';
+          data['rating'] =
+              data['rating'] != null ? (data['rating'] as num).toInt() : 0;
+          data['snapshot'] = doc;
+          data['docId'] = doc.id;
+          return data;
+        }).toList();
       });
     } catch (e) {
       print('Error fetching reviews: $e');
@@ -150,6 +152,12 @@ class _SearchPageState extends State<SearchPage> {
                     setState(() {
                       _selectedRating = value ?? 0;
                     });
+                  },
+                  onItemTap: (item) {
+                    final doc = item['snapshot'];
+                    if (doc is QueryDocumentSnapshot) {
+                      showReviewPopup(context, doc);
+                    }
                   },
                 ),
                 const SizedBox(height: 12),

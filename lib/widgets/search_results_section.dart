@@ -10,6 +10,7 @@ class SearchResultsSection extends StatelessWidget {
   final bool enableRatingFilter;
   final int selectedRating;
   final ValueChanged<int?>? onRatingChanged;
+  final ValueChanged<Map<String, dynamic>>? onItemTap;
 
   const SearchResultsSection({
     Key? key,
@@ -20,6 +21,7 @@ class SearchResultsSection extends StatelessWidget {
     this.enableRatingFilter = false,
     this.selectedRating = 0,
     this.onRatingChanged,
+    this.onItemTap,
   }) : super(key: key);
 
   @override
@@ -81,6 +83,9 @@ class SearchResultsSection extends StatelessWidget {
                             // You might pass 0 or any value since ResultItem will check showStars.
                             rating: showStars ? (item['rating'] ?? 0) : 0,
                             showStars: showStars, // Pass the flag to ResultItem
+                            onTap: onItemTap != null
+                                ? () => onItemTap!(item)
+                                : null,
                           ),
                         )
                         .toList(),
