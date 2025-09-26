@@ -12,6 +12,7 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   String _searchQuery = '';
+  int _selectedRating = 0;
 
   List<Map<String, dynamic>> _allReviews = [];
   List<Map<String, dynamic>> _allUsers = [];
@@ -80,14 +81,25 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredReviews =>
-      _allReviews
-          .where(
-            (review) => review['name'].toString().toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ),
-          )
-          .toList();
+  List<Map<String, dynamic>> get _filteredReviews => _allReviews.where((review) {
+        final query = _searchQuery.toLowerCase();
+        final name = review['name']?.toString().toLowerCase() ?? '';
+        final tags = (review['tags'] as List?)
+                ?.map((e) => e.toString().toLowerCase())
+                .toList() ??
+            [];
+        final keywords = (review['keywords'] as List?)
+                ?.map((e) => e.toString().toLowerCase())
+                .toList() ??
+            [];
+        final matchesQuery = query.isEmpty ||
+            name.contains(query) ||
+            tags.any((tag) => tag.contains(query)) ||
+            keywords.any((kw) => kw.contains(query));
+        final matchesRating =
+            _selectedRating == 0 || (review['rating'] ?? 0) >= _selectedRating;
+        return matchesQuery && matchesRating;
+      }).toList();
 
   List<Map<String, dynamic>> get _filteredUsers =>
       _allUsers
@@ -131,6 +143,14 @@ class _SearchPageState extends State<SearchPage> {
                   title:
                       'Review Results for "${_searchQuery.isEmpty ? "" : _searchQuery}"',
                   items: _filteredReviews,
+                  hasNoResults: _filteredReviews.isEmpty,
+                  enableRatingFilter: true,
+                  selectedRating: _selectedRating,
+                  onRatingChanged: (value) {
+                    setState(() {
+                      _selectedRating = value ?? 0;
+                    });
+                  },
                 ),
                 const SizedBox(height: 12),
                 SearchResultsSection(
