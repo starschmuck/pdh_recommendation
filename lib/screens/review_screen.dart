@@ -54,7 +54,7 @@ class ReviewPage extends StatefulWidget {
 class _ReviewPageState extends State<ReviewPage> {
   XFile? selectedImage;
   XFile? selectedVideo;
-  double sliderValue = .5;
+  double sliderValue = 0.0;
   bool _submitting = false;
   bool isFavorite = false;
   List<String> userFavorites = [];
@@ -341,7 +341,7 @@ class _ReviewPageState extends State<ReviewPage> {
 
     // ✅ Validation
     if (selectedMeal == null ||
-        sliderValue == 0 ||
+        sliderValue <= 0 ||
         reviewTextController.text.trim().isEmpty) {
       print(
         "⚠️ Validation failed: "
@@ -412,7 +412,9 @@ class _ReviewPageState extends State<ReviewPage> {
       }
 
       // ✅ When review is complete, return to previous screen
-      Navigator.of(context).pop();
+      final appState = Provider.of<MyAppState>(context, listen: false);
+      appState.setSelectedIndex(2); // Dashboard tab index
+      Navigator.of(context).pop();  // close the review screen
 
       // ✅ Reset UI state
       setState(() {

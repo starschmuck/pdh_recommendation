@@ -76,6 +76,15 @@ class MyAppState extends ChangeNotifier {
   Map<dynamic, dynamic>? _data;
   bool _isLoading = true;
 
+  // track nav bar index
+  int _selectedIndex = 0;
+  int get selectedIndex => _selectedIndex;
+
+  void setSelectedIndex(int index) {
+    _selectedIndex = index;
+    notifyListeners();
+  }
+
   // Getter for data
   Map<dynamic, dynamic>? get data => _data;
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pdh_recommendation/main.dart';
+import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
@@ -6,16 +8,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/search_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
-class NavigationController extends StatefulWidget {
-  @override
-  State<NavigationController> createState() => _NavigationControllerState();
-
-}
-
-class _NavigationControllerState extends State<NavigationController> {
-
-  int _currentIndex = 0;
-
+class NavigationController extends StatelessWidget {
   final List<Widget> _pages = [
     HomePage(),
     SearchPage(),
@@ -24,21 +17,16 @@ class _NavigationControllerState extends State<NavigationController> {
     SettingsPage(),
   ];
 
-  void _onNavBarTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  } 
-
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<MyAppState>(context);
+
     return Scaffold(
-      body: _pages[_currentIndex],
+      body: _pages[appState.selectedIndex],
       bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavBarTapped,
+        currentIndex: appState.selectedIndex,
+        onTap: (i) => appState.setSelectedIndex(i),
       ),
     );
   }
-
 }
