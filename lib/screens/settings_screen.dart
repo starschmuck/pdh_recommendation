@@ -12,6 +12,7 @@ class SettingsPage extends StatelessWidget {
   Future<void> _performFullLogout(BuildContext context) async {
     try {
       print('Logging out...');
+
       // Firebase sign out
       await FirebaseAuth.instance.signOut();
 
@@ -20,36 +21,13 @@ class SettingsPage extends StatelessWidget {
       await prefs.clear();
       print('Prefs Cleared');
 
-      // Navigate to splash screen or login screen
-      //navigatorKey.currentState?.pushAndRemoveUntil(
-      //  MaterialPageRoute(builder: (_) => SplashScreen()),
-      //  (route) => false,
-      //);
-
-      //Navigator.pushReplacement(
-      //  context,
-      //  MaterialPageRoute(builder: (_) => LoginPage()),
-      //);
-
-      // restart from main logic
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => MyApp()),
-        (route) => false,
-      );
-
-      /* 
-      Restart.restartApp(
-        notificationTitle: 'Logging out...',
-        //notificationBody: 'Logging out...',
-      );
-      */
-
+      // No navigation needed — AuthWrapper will rebuild and show LoginPage
       print('Logged out successfully!');
     } catch (e) {
       print('❌ Error during logout: $e');
-      //ScaffoldMessenger.of(context).showSnackBar(
-      //  SnackBar(content: Text("Logout failed. Please try again.")),
-      //);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Logout failed. Please try again.")),
+      );
     }
   }
 

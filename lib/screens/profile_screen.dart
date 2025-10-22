@@ -14,11 +14,6 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
 
-    // Placeholder values for now — later we’ll fetch from Firestore
-    final String userName = "John Doe"; // TODO: pull from Firestore 'name' field
-    final String? userEmail = user?.email;
-    final String? profileImageUrl = null; // TODO: pull from Firestore or Storage
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
       body: SafeArea(
@@ -34,38 +29,47 @@ class ProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
-                    // --- Profile Image ---
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: profileImageUrl != null
-                          ? NetworkImage(profileImageUrl)
-                          : null,
-                      child: profileImageUrl == null
-                          ? const Icon(Icons.person, size: 50)
-                          : null,
+                    // --- Profile Info from Firestore ---
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(user?.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const CircularProgressIndicator();
+                        }
+
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>?;
+
+                        final userName = data?['name'] ?? 'Unnamed User';
+                        final userEmail = user?.email ?? '';
+
+                        return Column(
+                          children: [
+                            // Name
+                            Text(
+                              userName,
+                              style: const TextStyle(
+                                fontSize: 24, // bigger
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Email
+                            Text(
+                              userEmail,
+                              style: const TextStyle(
+                                fontSize: 18, // bigger
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-
-                    const SizedBox(height: 12),
-
-                    // --- Name ---
-                    Text(
-                      userName,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    // --- Email ---
-                    if (userEmail != null)
-                      Text(
-                        userEmail,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                      ),
 
                     const SizedBox(height: 24),
 
@@ -79,29 +83,35 @@ class ProfilePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    // --- Placeholder for favorite dishes ---
+                    // Favorites stream 
                     StreamBuilder<DocumentSnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('users')
                           .doc(user?.uid)
                           .snapshots(),
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData) return CircularProgressIndicator();
+                        if (!snapshot.hasData) {
+                          return const CircularProgressIndicator();
+                        }
 
-                        final data = snapshot.data!.data() as Map<String, dynamic>?;
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>?;
                         final favorites = (data?['favorites'] as List<dynamic>?)
-                            ?.map((e) => e.toString())
-                            .toList() ?? [];
+                                ?.map((e) => e.toString())
+                                .toList() ??
+                            [];
 
                         if (favorites.isEmpty) {
-                          return const Text("You haven’t marked any favorites yet.");
+                          return const Text(
+                              "You haven’t marked any favorites yet.");
                         }
 
                         return Column(
                           children: favorites.map((meal) {
                             return ListTile(
                               title: Text(meal),
-                              trailing: const Icon(Icons.favorite, color: Colors.pink),
+                              trailing: const Icon(Icons.favorite,
+                                  color: Colors.pink),
                             );
                           }).toList(),
                         );
@@ -170,18 +180,7 @@ class ProfilePage extends StatelessWidget {
                           }).toList(),
                         );
                       },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // --- Placeholder for actions ---
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: implement logout
-                      },
-                      icon: const Icon(Icons.logout),
-                      label: const Text("Log Out"),
-                    ),
+                    ),     
                   ],
                 ),
               ),

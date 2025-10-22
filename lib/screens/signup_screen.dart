@@ -24,37 +24,35 @@ class _SignupPageState extends State<SignupPage> {
         _isLoading = true;
       });
       try {
-        // Create user in Firebase Auth.
+        // Create user in Firebase Auth
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            );
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
 
-        // Save additional user info to Firestore, including:
-        // - username: the username provided by the user (their social media handle)
-        // - name: the actual full name of the user
+        // Save additional user info to Firestore
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user?.uid)
             .set({
-              'username': _usernameController.text.trim(),
-              'email': _emailController.text.trim(),
-              'password_hash':
-                  'handled_by_firebase', // Firebase manages password security.
-              'name': _nameController.text.trim(),
-              'average_duration_at_pdh': 0.0, // Default initial value.
-              'isStaff': false, // Default value for isStaff.
-            });
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'password_hash': 'handled_by_firebase',
+          'name': _nameController.text.trim(),
+          'average_duration_at_pdh': 0.0,
+          'isStaff': false,
+        });
 
-        // After successful signup, update the app state (e.g., navigate to home).
-        Navigator.of(context).pop; // Close the signup page.
-        // Navigator.pushReplacementNamed(context, '/home');
+        // Dismiss keyboard and close signup page
+        FocusScope.of(context).unfocus();
+        //Navigator.of(context).pop();
+
+        // No need to push home — AuthWrapper will rebuild automatically
       } catch (e) {
-        // Handle errors such as weak password or email already in use.
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
       } finally {
         setState(() {
           _isLoading = false;
