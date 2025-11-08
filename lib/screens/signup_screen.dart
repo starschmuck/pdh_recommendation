@@ -181,7 +181,7 @@ class _SignupPageState extends State<SignupPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Colors.white,
         onPressed: () {
           Navigator.of(context).pop(context);
         },

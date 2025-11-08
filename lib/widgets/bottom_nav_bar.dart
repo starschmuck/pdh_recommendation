@@ -9,17 +9,18 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      items: const <BottomNavigationBarItem> [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(icon: Icon(Icons.rate_review), label: 'Reviews'),
+        BottomNavigationBarItem(icon: Icon(Icons.lightbulb), label: 'Suggestions'),
         BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
         BottomNavigationBarItem(icon: Icon(Icons.reorder), label: 'Dashboard'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
       ],
       currentIndex: currentIndex,
       onTap: onTap,
       selectedItemColor: Theme.of(context).colorScheme.primary,
       unselectedItemColor: Theme.of(context).colorScheme.primaryFixed,
+      type: BottomNavigationBarType.fixed,
     );
   }
 }

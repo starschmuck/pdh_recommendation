@@ -6,6 +6,7 @@ import 'package:rxdart/utils.dart';
 import 'package:async/async.dart';
 
 import '../widgets/individual_review_card.dart';
+import 'settings_screen.dart'; // NEW
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -15,7 +16,7 @@ class ProfilePage extends StatelessWidget {
     final User? user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -29,6 +30,23 @@ class ProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
+                    // --- Settings button (opens without nav bar) --- NEW
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SettingsPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.settings),
+                          label: const Text('Settings'),
+                        ),
+                      ],
+                    ),
                     // --- Profile Info from Firestore ---
                     StreamBuilder<DocumentSnapshot>(
                       stream: FirebaseFirestore.instance
@@ -48,20 +66,18 @@ class ProfilePage extends StatelessWidget {
 
                         return Column(
                           children: [
-                            // Name
                             Text(
                               userName,
                               style: const TextStyle(
-                                fontSize: 24, // bigger
+                                fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            // Email
                             Text(
                               userEmail,
                               style: const TextStyle(
-                                fontSize: 18, // bigger
+                                fontSize: 18,
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
                               ),
@@ -73,7 +89,6 @@ class ProfilePage extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // --- Favorite Dishes Header ---
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -83,7 +98,6 @@ class ProfilePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    // Favorites stream 
                     StreamBuilder<DocumentSnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('users')
@@ -110,8 +124,8 @@ class ProfilePage extends StatelessWidget {
                           children: favorites.map((meal) {
                             return ListTile(
                               title: Text(meal),
-                              trailing: const Icon(Icons.favorite,
-                                  color: Colors.pink),
+                              trailing:
+                                  const Icon(Icons.favorite, color: Colors.pink),
                             );
                           }).toList(),
                         );
@@ -120,7 +134,6 @@ class ProfilePage extends StatelessWidget {
                     
                     const SizedBox(height: 24),
 
-                    // --- Recent Activity Header ---
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -130,7 +143,6 @@ class ProfilePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    // --- Recent Activity Feed ---
                     StreamBuilder<List<QuerySnapshot>>(
                       stream: StreamZip([
                         FirebaseFirestore.instance
@@ -150,18 +162,23 @@ class ProfilePage extends StatelessWidget {
                         final reviews = snapshot.data![0].docs.map((doc) => {
                               'type': 'review',
                               'doc': doc,
-                              'timestamp': (doc['timestamp'] as Timestamp?)?.toDate() ?? DateTime(0),
+                              'timestamp':
+                                  (doc['timestamp'] as Timestamp?)?.toDate() ??
+                                      DateTime(0),
                             });
 
                         final suggestions = snapshot.data![1].docs.map((doc) => {
                               'type': 'suggestion',
                               'doc': doc,
-                              'timestamp': (doc['timestamp'] as Timestamp?)?.toDate() ?? DateTime(0),
+                              'timestamp':
+                                  (doc['timestamp'] as Timestamp?)?.toDate() ??
+                                      DateTime(0),
                             });
 
                         final allActivities = [...reviews, ...suggestions];
                         allActivities.sort((a, b) =>
-                            (b['timestamp'] as DateTime).compareTo(a['timestamp'] as DateTime));
+                            (b['timestamp'] as DateTime).compareTo(
+                                a['timestamp'] as DateTime));
 
                         final recent = allActivities.take(5).toList();
 
@@ -171,7 +188,8 @@ class ProfilePage extends StatelessWidget {
 
                         return Column(
                           children: recent.map((activity) {
-                            final doc = activity['doc'] as DocumentSnapshot<Map<String, dynamic>>;
+                            final doc = activity['doc']
+                                as DocumentSnapshot<Map<String, dynamic>>;
                             if (activity['type'] == 'review') {
                               return IndividualReviewCard(doc: doc);
                             } else {

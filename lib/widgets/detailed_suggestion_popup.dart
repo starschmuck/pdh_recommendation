@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailedSuggestionPopup extends StatefulWidget {
   final DocumentSnapshot doc;
@@ -17,6 +18,37 @@ class _DetailedSuggestionPopupState extends State<DetailedSuggestionPopup> {
   int likes = 0;
   bool hasLiked = false;
   bool initialHasLiked = false;
+
+  String _labelFor(String url) {
+    try {
+      final u = Uri.parse(url);
+      if (u.hasAuthority && u.host.isNotEmpty) return 'Recipe: ${u.host}';
+    } catch (_) {}
+    return 'View recipe';
+  }
+
+  Future<void> _openRecipe(String url) async {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid recipe link.')),
+      );
+      return;
+    }
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open recipe link.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error launching link: $e')),
+      );
+    }
+  }
+  
 
   @override
   void initState() {
@@ -105,6 +137,7 @@ class _DetailedSuggestionPopupState extends State<DetailedSuggestionPopup> {
     final suggestionText = data['suggestionText'] ?? '';
     final timestamp = data['timestamp'] as Timestamp?;
     final dateTime = timestamp?.toDate();
+    final recipeLink = (data['recipeLink'] as String?)?.trim(); // NEW
 
     final absoluteTime = dateTime != null
         ? DateFormat('MMM d, yyyy h:mm a').format(dateTime)
@@ -112,8 +145,14 @@ class _DetailedSuggestionPopupState extends State<DetailedSuggestionPopup> {
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      backgroundColor: const Color(0xFFF1F7FF), // soft blue
       insetPadding: const EdgeInsets.all(16.0),
-      child: Padding(
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F7FF),
+          borderRadius: BorderRadius.circular(12.0),
+          border: Border.all(color: const Color(0xFFDFEAFF)), // subtle border
+        ),
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
@@ -150,6 +189,32 @@ class _DetailedSuggestionPopupState extends State<DetailedSuggestionPopup> {
                 suggestionText,
                 style: const TextStyle(fontSize: 14.0),
               ),
+
+              // --- Recipe link (if present) ---  NEW
+              if (recipeLink != null && recipeLink.isNotEmpty) ...[
+                const SizedBox(height: 12.0),
+                GestureDetector(
+                  onTap: () => _openRecipe(recipeLink),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.link, size: 20, color: Colors.blue),
+                      const SizedBox(width: 8.0),
+                      Flexible(
+                        child: Text(
+                          _labelFor(recipeLink),
+                          style: const TextStyle(
+                            fontSize: 14.0,
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 12.0),
 

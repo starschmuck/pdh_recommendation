@@ -11,7 +11,7 @@ class ProfilePage extends StatelessWidget {
     final User? user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(

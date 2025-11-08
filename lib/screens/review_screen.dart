@@ -1,6 +1,7 @@
-import 'dart:collection';
 import 'dart:io';
 
+import 'package:pdh_recommendation/models/review.dart';
+import 'package:pdh_recommendation/repositories/review_repository';
 import 'package:video_player/video_player.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -381,23 +382,29 @@ class _ReviewPageState extends State<ReviewPage> {
       return;
     }
 
-    final reviewData = {
-      'userId': FirebaseAuth.instance.currentUser?.uid,
-      'meal': selectedMeal,
-      'rating': sliderValue,
-      'tags': selectedTags, // ✅ still stored, but optional
-      'reviewText': reviewTextController.text.trim(),
-      'mediaUrl': mediaUrl,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
-    print("▶️ Writing review to Firestore: $reviewData");
+    // after you compute mediaUrl and have reviewId
+    final repo = ReviewRepository();
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid == null) {
+      throw Exception('Not logged in');
+    }
+
+    // Build Review model (ensure timestamp uses DateTime.now(); repo will write serverTimestamp on create)
+    final review = Review(
+      id: reviewId,
+      userId: currentUid,
+      meal: selectedMeal ?? '',
+      rating: sliderValue,
+      reviewText: reviewTextController.text.trim(),
+      timestamp: DateTime.now(),
+      tags: selectedTags,
+      mediaUrl: mediaUrl,
+      likesCount: 0, // always default 0 on creation
+    );
+
 
     try {
-      await FirebaseFirestore.instance
-          .collection('reviews')
-          .add(reviewData)
-          .timeout(Duration(seconds: 10));
-      print("✅ Firestore.add succeeded");
+      await repo.createReview(review);
 
       // ✅ Update favorites only if the heart toggle is on
       if (selectedMeal != null && userFavorites.contains(selectedMeal)) {
@@ -480,7 +487,7 @@ void showCameraOptions(BuildContext context) {
         mealsCollectionRef.where('meal_type', isEqualTo: filterMealType).get();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Colors.white,
       body:
           appState.isLoading // If Loading...
               ? Center(child: CircularProgressIndicator(color: Colors.white)) // Show circular loading indicator

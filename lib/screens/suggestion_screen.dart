@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pdh_recommendation/models/suggestion.dart';
 
 class SuggestionPage extends StatefulWidget {
   const SuggestionPage({super.key});
@@ -10,73 +11,84 @@ class SuggestionPage extends StatefulWidget {
 }
 
 class _SuggestionPageState extends State<SuggestionPage> {
-  // Controllers for suggestion title and details.
-  final TextEditingController suggestionTitleController =
-      TextEditingController();
-  final TextEditingController suggestionTextController =
-      TextEditingController();
+  final TextEditingController suggestionTitleController = TextEditingController();
+  final TextEditingController suggestionTextController = TextEditingController();
+  final TextEditingController recipeLinkController = TextEditingController(); // NEW
 
   @override
   void dispose() {
     suggestionTitleController.dispose();
     suggestionTextController.dispose();
+    recipeLinkController.dispose(); // NEW
     super.dispose();
   }
 
-  /// Submits the suggestion.
+  bool _looksLikeUrl(String v) {
+    final t = v.toLowerCase().trim();
+    return t.startsWith('http://') || t.startsWith('https://');
+  }
+
   Future<void> submitSuggestion() async {
     final title = suggestionTitleController.text.trim();
     final suggestionText = suggestionTextController.text.trim();
+    final recipeLinkRaw = recipeLinkController.text.trim();
 
     if (title.isEmpty || suggestionText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Please fill in both the title and suggestion details.",
-          ),
-        ),
+        const SnackBar(content: Text("Please fill in both the title and suggestion details.")),
+      );
+      return;
+    }
+
+    if (recipeLinkRaw.isNotEmpty && !_looksLikeUrl(recipeLinkRaw)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Recipe link must start with http(s)://")),
       );
       return;
     }
 
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("User not logged in.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User not logged in.")),
+      );
       return;
     }
 
-    // Create a document reference with an auto-generated ID.
     final docRef = FirebaseFirestore.instance.collection('suggestions').doc();
 
-    final suggestionData = {
-      'suggestionId': docRef.id,
-      'userId': userId,
-      'title': title,
-      'suggestionText': suggestionText,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
+    final suggestion = Suggestion(
+      suggestionId: docRef.id,
+      userId: userId,
+      title: title,
+      suggestionText: suggestionText,
+      timestamp: DateTime.now(), // will be replaced with serverTimestamp below
+      recipeLink: recipeLinkRaw.isEmpty ? null : recipeLinkRaw,
+    );
+
+    final data = suggestion.toMap();
+    // Preserve existing server-side timestamp behavior
+    data['timestamp'] = FieldValue.serverTimestamp();
 
     try {
-      await docRef.set(suggestionData);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Suggestion submitted!")));
-      // Optionally clear the fields after submission.
+      await docRef.set(data);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Suggestion submitted!")),
+      );
       suggestionTitleController.clear();
       suggestionTextController.clear();
+      recipeLinkController.clear(); // reset link
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -94,10 +106,7 @@ class _SuggestionPageState extends State<SuggestionPage> {
                     children: [
                       const Text(
                         "Submit a Suggestion!",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16.0),
                       TextField(
@@ -116,6 +125,15 @@ class _SuggestionPageState extends State<SuggestionPage> {
                         ),
                         maxLines: 3,
                       ),
+                      const SizedBox(height: 16.0),
+                      TextField(
+                        controller: recipeLinkController,
+                        decoration: const InputDecoration(
+                          hintText: "Recipe link (optional, starts with http:// or https://)",
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.url,
+                      ),
                     ],
                   ),
                 ),
@@ -130,10 +148,8 @@ class _SuggestionPageState extends State<SuggestionPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
+        backgroundColor: Theme.of(context).colorScheme.primary, // match Review
+        onPressed: () => Navigator.of(context).pop(),
         child: const Icon(Icons.arrow_back),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,

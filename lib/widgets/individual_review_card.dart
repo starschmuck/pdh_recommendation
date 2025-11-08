@@ -58,7 +58,7 @@ class _IndividualReviewCardState extends State<IndividualReviewCard> {
     final relativeTime =
         dateTime != null ? timeago.format(dateTime, locale: 'en_short') : '';
 
-    final likes = (data['likes'] ?? 0) as int;
+    final likes = (data['likesCount'] ?? 0) as int;
 
     final String? mediaUrl = data['mediaUrl'] as String?;
     final bool hasMedia = mediaUrl != null && mediaUrl.isNotEmpty;
@@ -74,9 +74,9 @@ class _IndividualReviewCardState extends State<IndividualReviewCard> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: const Color(0xFFFFF1F1), // soft red background
           borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: const Color(0xFFFFE0E0)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         child: Column(
@@ -135,9 +135,9 @@ class _IndividualReviewCardState extends State<IndividualReviewCard> {
                         vertical: 4.0,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blueGrey[50],
+                        color: const Color(0xFFFFECEC),
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: Colors.blueGrey.shade200),
+                        border: Border.all(color: const Color(0xFFFFD2D2)),
                       ),
                       child: Text(
                         tag,

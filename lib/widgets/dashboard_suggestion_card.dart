@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:pdh_recommendation/services/tasteful_twin_service.dart';
+import 'package:pdh_recommendation/widgets/twin_comparison_popup.dart';
 
 class DashboardSuggestionCard extends StatelessWidget {
   final List<String> suggestions;
+  final bool isLoading;
+  final String userId; // add userId so we know who "Me" is
 
   const DashboardSuggestionCard({
     super.key,
     required this.suggestions,
+    required this.userId,
+    this.isLoading = false,
   });
 
   @override
@@ -13,15 +19,24 @@ class DashboardSuggestionCard extends StatelessWidget {
     return InkWell(
       onTap: suggestions.isEmpty
           ? null // disable tap if no suggestions
-          : () {
+          : () async {
+              // fetch comparison data
+              final service = TastefulTwinService();
+              final rows = await service.getTwinComparisonTable(userId);
+
+              // extract twinIds from rows (first 3 highlight rows)
+              final twinIds = rows
+                  .where((r) => r.highlight)
+                  .map((r) => r.twinRatings.keys)
+                  .expand((ids) => ids)
+                  .toSet()
+                  .toList();
+
               showDialog(
                 context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text("Detailed Suggestions"),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: suggestions.map((s) => Text("• $s")).toList(),
-                  ),
+                builder: (_) => TwinComparisonPopup(
+                  rows: rows,
+                  twinIds: twinIds,
                 ),
               );
             },
@@ -37,37 +52,29 @@ class DashboardSuggestionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "What we suggest...",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14.0,
-              ),
-            ),
-            const SizedBox(height: 8.0),
+            const Text("What we suggest...",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 8),
 
-            if (suggestions.isEmpty)
-              const Text(
-                "No suggestions yet. Rate more meals!",
-                style: TextStyle(
-                  fontSize: 13.0,
-                  color: Colors.black54,
-                  fontStyle: FontStyle.italic,
-                ),
-              )
+            if (isLoading)
+              const Text("Loading…",
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontStyle: FontStyle.italic))
+            else if (suggestions.isEmpty)
+              const Text("No suggestions yet. Rate more meals!",
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontStyle: FontStyle.italic))
             else
-              ...suggestions.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2.0),
-                  child: Text(
-                    "• $item",
-                    style: const TextStyle(
-                      fontSize: 13.0,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ),
+              ...suggestions.map((s) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text("• $s",
+                        style: const TextStyle(
+                            fontSize: 13, color: Colors.black87)),
+                  )),
           ],
         ),
       ),

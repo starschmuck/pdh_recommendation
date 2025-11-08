@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> {
     final appState = Provider.of<MyAppState>(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Colors.white,
       body: appState.isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : SafeArea(

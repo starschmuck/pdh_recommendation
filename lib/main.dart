@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
             seedColor: fitCrimson,
             dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
           ),
+          scaffoldBackgroundColor: Colors.white,
         ),
         // Use AuthWrapper as the home; it will display the appropriate screen.
         home: const AuthWrapper(),
@@ -56,7 +57,7 @@ class AuthWrapper extends StatelessWidget {
             // Wrap the LoginPage in a Scaffold to provide Material context.
             return Scaffold(
               body: LoginPage(),
-              backgroundColor: Theme.of(context).colorScheme.primary,
+              backgroundColor: Colors.white,
             );
           } else {
             // Assume NavigationController already includes its own Scaffold.

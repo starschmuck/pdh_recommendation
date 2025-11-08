@@ -1,0 +1,134 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/review.dart';
+
+class ReviewRepository {
+  final FirebaseFirestore _db;
+  CollectionReference get _reviews => _db.collection('reviews');
+  CollectionReference get _userPopularity => _db.collection('userPopularity');
+
+  ReviewRepository([FirebaseFirestore? firestore])
+      : _db = firestore ?? FirebaseFirestore.instance;
+
+  // Create review: always force likes = 0
+  Future<void> createReview(Review review) async {
+    final docRef = _reviews.doc(review.id);
+    final reviewWithLikes = review.copyWith(likes: 0);
+
+    await _db.runTransaction((tx) async {
+      tx.set(docRef, reviewWithLikes.toMap());
+      // no popularity update needed since likes = 0
+    });
+  }
+
+  // Update review: compute likes delta and update popularity
+  Future<void> updateReview(Review newReview) async {
+    final docRef = _reviews.doc(newReview.id);
+
+    await _db.runTransaction((tx) async {
+      // --- all reads first ---
+      final snap = await tx.get(docRef);
+      final oldData =
+          snap.exists ? (snap.data() as Map<String, dynamic>) : <String, dynamic>{};
+      final oldLikes = (oldData['likesCount'] as num?)?.toInt() ?? 0;
+      final newLikes = newReview.likesCount;
+      final delta = newLikes - oldLikes;
+
+      DocumentSnapshot? popSnap;
+      if (delta != 0) {
+        popSnap = await tx.get(_userPopularity.doc(newReview.userId));
+      }
+
+      // --- then all writes ---
+      tx.set(docRef, newReview.toMap(), SetOptions(merge: true));
+      if (delta != 0) {
+        _applyPopularityUpdate(tx, newReview.userId, delta, popSnap, newReview);
+      }
+    });
+  }
+
+  // Delete review and decrement popularity by its likes
+  Future<void> deleteReview(String reviewId) async {
+    final docRef = _reviews.doc(reviewId);
+
+    await _db.runTransaction((tx) async {
+      // --- reads ---
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final data = snap.data() as Map<String, dynamic>;
+      final likes = (data['likes'] as num?)?.toInt() ?? 0;
+      final ownerId = data['userId'] as String?;
+
+      DocumentSnapshot? popSnap;
+      if (ownerId != null && likes != 0) {
+        popSnap = await tx.get(_userPopularity.doc(ownerId));
+      }
+
+      // --- writes ---
+      tx.delete(docRef);
+      if (ownerId != null && likes != 0) {
+        _applyPopularityUpdate(tx, ownerId, -likes, popSnap, null);
+      }
+    });
+  }
+
+  // Increment/decrement likes by arbitrary delta
+  Future<void> incrementReviewLikes(String reviewId, int delta) async {
+    final docRef = _reviews.doc(reviewId);
+
+    await _db.runTransaction((tx) async {
+      // --- reads ---
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final data = snap.data() as Map<String, dynamic>;
+      final ownerId = data['userId'] as String?;
+      final oldLikes = (data['likes'] as num?)?.toInt() ?? 0;
+      final newLikes = (oldLikes + delta).clamp(0, 1 << 31);
+
+      DocumentSnapshot? popSnap;
+      if (ownerId != null && delta != 0) {
+        popSnap = await tx.get(_userPopularity.doc(ownerId));
+      }
+
+      // --- writes ---
+      tx.update(docRef, {'likes': newLikes});
+      if (ownerId != null && delta != 0) {
+        _applyPopularityUpdate(tx, ownerId, delta, popSnap, null);
+      }
+    });
+  }
+
+  // Apply popularity update given a pre-fetched snapshot
+  void _applyPopularityUpdate(
+    Transaction tx,
+    String userId,
+    int delta,
+    DocumentSnapshot? popSnap,
+    Review? reviewForMeta,
+  ) {
+    final popRef = _userPopularity.doc(userId);
+    final now = FieldValue.serverTimestamp();
+
+    if (popSnap != null && popSnap.exists) {
+      final current = popSnap.data() as Map<String, dynamic>;
+      final currentTotal = (current['totalLikes'] as num?)?.toInt() ?? 0;
+      final newTotal = (currentTotal + delta).clamp(0, 1 << 31);
+      tx.update(popRef, {
+        'totalLikes': newTotal,
+        'lastUpdated': now,
+        if (reviewForMeta != null) 'displayName': reviewForMeta.userId,
+      });
+    } else {
+      final initTotal = delta.clamp(0, 1 << 31);
+      tx.set(popRef, {
+        'userId': userId,
+        'displayName': reviewForMeta?.userId ?? userId,
+        'totalLikes': initTotal,
+        'lastUpdated': now,
+      });
+    }
+  }
+
+  // Convenience wrappers
+  Future<void> likeReview(String reviewId) => incrementReviewLikes(reviewId, 1);
+  Future<void> unlikeReview(String reviewId) => incrementReviewLikes(reviewId, -1);
+}

@@ -20,24 +20,23 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  late Future<List<Meal>> _twinSuggestions;
+  late String _userId = FirebaseAuth.instance.currentUser?.uid ?? "";
   late Future<List<Meal>> _crowdFavorites;
   late Future<List<Meal>> _favorites;
+  late Future<List<String>> _twinSuggestions;
 
   @override
   void initState() {
     super.initState();
-    final user = FirebaseAuth.instance.currentUser;
-    final userId = user?.uid ?? ""; 
-    _twinSuggestions = TastefulTwinService().getRecommendationsForUser(userId);
-    _crowdFavorites = CrowdRatingService().getTopRatedMealsForToday();
+    _userId = FirebaseAuth.instance.currentUser?.uid ?? "";
+    _twinSuggestions = TastefulTwinService().getTopFoodsFromTwins(_userId);
     _favorites = FavoritesService().getTodaysFavorites();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(12.0),
@@ -65,37 +64,30 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       const SizedBox(height: 12),
 
-                      FutureBuilder<List<Meal>>(
-                        future: _twinSuggestions,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (snapshot.hasError) {
-                            return DashboardSuggestionCard(suggestions: []); // fallback inside card
-                          }
-                          final meals = snapshot.data ?? [];
+                     FutureBuilder<List<String>>(
+                      future: _twinSuggestions,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
                           return DashboardSuggestionCard(
-                            suggestions: meals.map((m) => m.name).toList(),
+                            suggestions: [],
+                            isLoading: true,
+                            userId: _userId,
                           );
-                        },
-                      ),
-
-                      FutureBuilder<List<Meal>>(
-                        future: _crowdFavorites,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (snapshot.hasError) {
-                            return const DashboardCrowdCard(crowdFavorites: []);
-                          }
-                          final meals = snapshot.data ?? [];
-                          return DashboardCrowdCard(
-                            crowdFavorites: meals.map((m) => m.name).toList(),
+                        }
+                        if (snapshot.hasError) {
+                          return DashboardSuggestionCard(
+                            suggestions: [],
+                            userId: _userId,
                           );
-                        },
-                      ),
+                        }
+                        final foods = snapshot.data ?? [];
+                        return DashboardSuggestionCard(
+                          suggestions: foods,
+                          userId: _userId,
+                        );
+                      },
+                    ),
+                      const DashboardCrowdCard(),
 
                       FutureBuilder<List<Meal>>(
                         future: _favorites,
@@ -142,10 +134,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         placement: "You’re 123 out of 4,234",
                         accuracy: "99% accuracy",
                       ),
-                      DashboardPopularityCard(
-                        placement: "You’re 456 out of 4,324",
-                        likeSummary: "49 total review likes",
-                      ),
+                      DashboardPopularityCard(),
                     ],
                   ),
                 ),

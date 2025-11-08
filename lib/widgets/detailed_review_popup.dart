@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import '../repositories/review_repository';
 import 'individual_review_card.dart';
 import 'review_video_player.dart';
 
@@ -19,6 +20,8 @@ class _DetailedReviewPopupState extends State<DetailedReviewPopup> {
   int likes = 0;
   bool hasLiked = false;
   bool initialHasLiked = false;
+  ReviewRepository _repo = ReviewRepository();
+
 
   @override
   void initState() {
@@ -60,40 +63,38 @@ class _DetailedReviewPopupState extends State<DetailedReviewPopup> {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    _commitLikeChange();
-  }
+  void _toggleLike() async {
+    final reviewId = widget.doc.id;
 
-  Future<void> _commitLikeChange() async {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) return;
-
-    final docRef = widget.doc.reference;
-    final likeRef = docRef.collection('likes').doc(currentUserId);
-
-    if (hasLiked != initialHasLiked) {
-      if (hasLiked) {
-        await likeRef.set({'likedAt': FieldValue.serverTimestamp()});
-        await docRef.update({'likes': FieldValue.increment(1)});
-      } else {
-        await likeRef.delete();
-        await docRef.update({'likes': FieldValue.increment(-1)});
-      }
-    }
-  }
-
-  void _toggleLike() {
     setState(() {
       if (hasLiked) {
         hasLiked = false;
-        likes--;
+        likes = (likes > 0) ? likes - 1 : 0;
       } else {
         hasLiked = true;
         likes++;
       }
     });
+
+    try {
+      if (hasLiked) {
+        await _repo.likeReview(reviewId);
+      } else {
+        await _repo.unlikeReview(reviewId);
+      }
+    } catch (e) {
+      // Roll back UI if Firestore update fails
+      setState(() {
+        if (hasLiked) {
+          hasLiked = false;
+          likes = (likes > 0) ? likes - 1 : 0;
+        } else {
+          hasLiked = true;
+          likes++;
+        }
+      });
+      debugPrint("❌ Failed to update like: $e");
+    }
   }
 
   @override
@@ -121,8 +122,14 @@ class _DetailedReviewPopupState extends State<DetailedReviewPopup> {
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      backgroundColor: const Color(0xFFFFF1F1), // soft red
       insetPadding: const EdgeInsets.all(16.0),
-      child: Padding(
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF1F1),
+          borderRadius: BorderRadius.circular(12.0),
+          border: Border.all(color: const Color(0xFFFFE0E0)),
+        ),
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(

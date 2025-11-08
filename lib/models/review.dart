@@ -3,12 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Review {
   final String id;
   final String userId;
-  final String meal;       
+  final String meal;
   final double rating;
-  final String reviewText;  
+  final String reviewText;
   final List<String> tags;
   final String? mediaUrl;
   final DateTime timestamp;
+  final int likesCount;
 
   Review({
     required this.id,
@@ -19,6 +20,7 @@ class Review {
     required this.timestamp,
     this.tags = const [],
     this.mediaUrl,
+    this.likesCount = 0,
   });
 
   factory Review.fromFirestore(DocumentSnapshot doc) {
@@ -27,14 +29,12 @@ class Review {
       id: doc.id,
       userId: data['userId'] ?? '',
       meal: data['meal'] ?? '',
-      rating: (data['rating'] as num).toDouble(),
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
       reviewText: data['reviewText'] ?? '',
-      tags: (data['tags'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      mediaUrl: data['mediaUrl'],
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      tags: (data['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      mediaUrl: data['mediaUrl'] as String?,
+      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      likesCount: (data['likesCount'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -47,6 +47,21 @@ class Review {
       'tags': tags,
       'mediaUrl': mediaUrl,
       'timestamp': Timestamp.fromDate(timestamp),
+      'likesCount': likesCount,
     };
+  }
+
+  Review copyWith({ int? likes, String? reviewText, /* other fields as needed */ }) {
+    return Review(
+      id: id,
+      userId: userId,
+      meal: meal,
+      rating: rating,
+      reviewText: reviewText ?? this.reviewText,
+      timestamp: timestamp,
+      tags: tags,
+      mediaUrl: mediaUrl,
+      likesCount: likesCount ?? this.likesCount,
+    );
   }
 }
