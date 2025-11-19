@@ -12,7 +12,6 @@ class FabCluster extends StatefulWidget {
 
 class _FabClusterState extends State<FabCluster> {
   bool _isFabExpanded = false;
-
   void _toggleFab() => setState(() => _isFabExpanded = !_isFabExpanded);
 
   @override
@@ -20,43 +19,73 @@ class _FabClusterState extends State<FabCluster> {
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
+        // Review
         AnimatedPositioned(
           duration: const Duration(milliseconds: 200),
-          right: 16.0,
-          bottom: _isFabExpanded ? 200.0 : 16.0,
+            right: 16,
+          bottom: _isFabExpanded ? 200 : 16,
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 200),
-            opacity: _isFabExpanded ? 1.0 : 0.0,
+            opacity: _isFabExpanded ? 1 : 0,
             child: SizedBox(
               width: 150,
               child: FloatingActionButton.extended(
-                heroTag: 'review',
+                heroTag: 'fab_review',
                 backgroundColor: Theme.of(context).colorScheme.primary,
+                icon: const Icon(Icons.rate_review),
+                label: const Text('Review'),
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ReviewPage()),
+                    MaterialPageRoute(builder: (_) => const ReviewPage()),
                   );
                   _toggleFab();
                 },
-                label: const Text('Review'),
-                icon: const Icon(Icons.rate_review),
               ),
             ),
           ),
         ),
+        // Suggest
         AnimatedPositioned(
           duration: const Duration(milliseconds: 200),
-          right: 16.0,
-          bottom: _isFabExpanded ? 140.0 : 16.0,
+          right: 16,
+          bottom: _isFabExpanded ? 140 : 16,
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 200),
-            opacity: _isFabExpanded ? 1.0 : 0.0,
+            opacity: _isFabExpanded ? 1 : 0,
             child: SizedBox(
               width: 150,
               child: FloatingActionButton.extended(
-                heroTag: 'guess',
+                heroTag: 'fab_suggest',
                 backgroundColor: Theme.of(context).colorScheme.primary,
+                icon: const Icon(Icons.edit),
+                label: const Text('Suggest'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SuggestionPage()),
+                  );
+                  _toggleFab();
+                },
+              ),
+            ),
+          ),
+        ),
+        // Predict
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 200),
+          right: 16,
+          bottom: _isFabExpanded ? 80 : 16,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _isFabExpanded ? 1 : 0,
+            child: SizedBox(
+              width: 150,
+              child: FloatingActionButton.extended(
+                heroTag: 'fab_predict',
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                icon: const Icon(Icons.help_outline),
+                label: const Text('Guess'),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -64,42 +93,16 @@ class _FabClusterState extends State<FabCluster> {
                   );
                   _toggleFab();
                 },
-                label: const Text('Guess'),
-                icon: const Icon(Icons.help_outline),
               ),
             ),
           ),
         ),
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 200),
-          right: 16.0,
-          bottom: _isFabExpanded ? 80.0 : 16.0,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: _isFabExpanded ? 1.0 : 0.0,
-            child: SizedBox(
-              width: 150,
-              child: FloatingActionButton.extended(
-                heroTag: 'suggest',
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SuggestionPage()),
-                  );
-                  _toggleFab();
-                },
-                label: const Text('Suggest'),
-                icon: const Icon(Icons.edit),
-              ),
-            ),
-          ),
-        ),
+        // Toggle
         Positioned(
-          right: 16.0,
-          bottom: 16.0,
+          right: 16,
+          bottom: 16,
           child: FloatingActionButton(
-            heroTag: 'toggle',
+            heroTag: 'fab_toggle',
             backgroundColor: Theme.of(context).colorScheme.primary,
             onPressed: _toggleFab,
             child: Icon(_isFabExpanded ? Icons.close : Icons.add),
