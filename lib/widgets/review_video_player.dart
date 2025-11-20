@@ -3,7 +3,7 @@ import 'package:video_player/video_player.dart';
 
 class ReviewVideoPlayer extends StatefulWidget {
   final String url;
-  const ReviewVideoPlayer({Key? key, required this.url}) : super(key: key);
+  const ReviewVideoPlayer({super.key, required this.url});
 
   @override
   State<ReviewVideoPlayer> createState() => _ReviewVideoPlayerState();

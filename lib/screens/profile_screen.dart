@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pdh_recommendation/widgets/individual_suggestion_card.dart';
-import 'package:rxdart/utils.dart';
 import 'package:async/async.dart';
 
 import '../widgets/individual_review_card.dart';

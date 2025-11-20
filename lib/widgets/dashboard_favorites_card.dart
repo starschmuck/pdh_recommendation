@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pdh_recommendation/main.dart';
-import 'package:pdh_recommendation/screens/profile_screen.dart';
 import 'package:provider/provider.dart'; // 👈 make sure this import matches your file path
 
 class DashboardFavoritesCard extends StatelessWidget {

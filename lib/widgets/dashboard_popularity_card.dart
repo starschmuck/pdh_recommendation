@@ -45,7 +45,7 @@ class _DashboardPopularityCardState extends State<DashboardPopularityCard> {
 
     // --- Current user ---
     final meSnap = await db.collection('userPopularity').doc(currentUserId).get();
-    final meData = meSnap.data() as Map<String, dynamic>?;
+    final meData = meSnap.data();
     final myLikes = (meData?['totalLikes'] as num?)?.toInt() ?? 0;
 
     // --- Rank ---

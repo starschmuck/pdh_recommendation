@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pdh_recommendation/models/meal.dart';
-import 'package:pdh_recommendation/services/crowd_rating_service.dart';
 import 'package:pdh_recommendation/services/favorites_service.dart';
 import 'package:pdh_recommendation/services/tasteful_twin_service.dart';
 

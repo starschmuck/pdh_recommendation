@@ -61,7 +61,7 @@ class Review {
       timestamp: timestamp,
       tags: tags,
       mediaUrl: mediaUrl,
-      likesCount: likesCount ?? this.likesCount,
+      likesCount: likesCount ?? likesCount,
     );
   }
 }

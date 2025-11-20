@@ -7,10 +7,10 @@ class SuggestionResultsCard extends StatelessWidget {
   final String query;
 
   const SuggestionResultsCard({
-    Key? key,
+    super.key,
     required this.suggestionDocs,
     required this.query,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

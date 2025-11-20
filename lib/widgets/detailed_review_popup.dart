@@ -9,7 +9,7 @@ import 'review_video_player.dart';
 class DetailedReviewPopup extends StatefulWidget {
   final DocumentSnapshot doc;
 
-  const DetailedReviewPopup({Key? key, required this.doc}) : super(key: key);
+  const DetailedReviewPopup({super.key, required this.doc});
 
   @override
   State<DetailedReviewPopup> createState() => _DetailedReviewPopupState();

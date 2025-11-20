@@ -7,8 +7,7 @@ import 'individual_suggestion_card.dart';
 class WeeklySuggestionCard extends StatelessWidget {
   final List<DocumentSnapshot> suggestionDocs;
 
-  const WeeklySuggestionCard({Key? key, required this.suggestionDocs})
-      : super(key: key);
+  const WeeklySuggestionCard({super.key, required this.suggestionDocs});
 
   @override
   Widget build(BuildContext context) {

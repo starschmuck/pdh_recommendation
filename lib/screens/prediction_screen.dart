@@ -46,7 +46,7 @@ class _PredictionScreenState extends State<PredictionScreen> {
           .get();
 
       if (snap.exists) {
-        final data = snap.data() as Map<String, dynamic>? ?? {};
+        final data = snap.data() ?? {};
         setState(() {
           _hasExistingPrediction = true;
           _existingMealName =
@@ -196,14 +196,9 @@ class _PredictionScreenState extends State<PredictionScreen> {
                   },
                   orElse: () => null as dynamic,
                 );
-                if (match != null) {
-                  _selectedMealId = match.value.id;
-                  _selectedMealName = _optionsIdToName[_selectedMealId!];
-                } else {
-                  _selectedMealId = null;
-                  _selectedMealName = null;
-                }
-              } else {
+                _selectedMealId = match.value.id;
+                _selectedMealName = _optionsIdToName[_selectedMealId!];
+                            } else {
                 _selectedMealId = null;
                 _selectedMealName = null;
               }
@@ -241,7 +236,7 @@ class _PredictionScreenState extends State<PredictionScreen> {
                 ],
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedMealId,
+                  initialValue: _selectedMealId,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Choose your prediction',

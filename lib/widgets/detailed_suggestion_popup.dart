@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 class DetailedSuggestionPopup extends StatefulWidget {
   final DocumentSnapshot doc;
 
-  const DetailedSuggestionPopup({Key? key, required this.doc}) : super(key: key);
+  const DetailedSuggestionPopup({super.key, required this.doc});
 
   @override
   State<DetailedSuggestionPopup> createState() => _DetailedSuggestionPopupState();

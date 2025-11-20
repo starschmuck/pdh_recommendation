@@ -7,7 +7,7 @@ import 'package:pdh_recommendation/widgets/individual_review_card.dart';
 class WeeklyReviewCard extends StatelessWidget {
   final List<DocumentSnapshot> reviewDocs;
 
-  const WeeklyReviewCard({Key? key, required this.reviewDocs}) : super(key: key);
+  const WeeklyReviewCard({super.key, required this.reviewDocs});
 
   @override
   Widget build(BuildContext context) {

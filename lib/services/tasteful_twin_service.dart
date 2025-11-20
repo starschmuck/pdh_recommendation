@@ -5,7 +5,7 @@ import 'dart:math';
 
 class TwinComparisonRow {
   final String foodName;
-  final String meDisplay; // e.g. "Pizza (5)" or "Pizza (?)"
+  final String meDisplay; // rating string for "Me", e.g. "5" or "-"
   final Map<String, String> twinRatings; // userId -> rating string
   final bool highlight;
 
@@ -211,9 +211,20 @@ Map<String, double> _calculateSimilarity(
 
       if (todaysTwinReviews.isNotEmpty) {
         final bestReview = todaysTwinReviews.reduce((a, b) => a.rating >= b.rating ? a : b);
+        final meRatingForBest = userReviews.firstWhere(
+          (r) => r.meal == bestReview.meal,
+          orElse: () => Review(
+            id: '',
+            userId: userId,
+            meal: bestReview.meal,
+            rating: -1,
+            reviewText: '',
+            timestamp: DateTime.now(),
+          ),
+        ).rating;
         rows.add(TwinComparisonRow(
           foodName: bestReview.meal,
-          meDisplay: "${bestReview.meal} (?)",
+          meDisplay: meRatingForBest >= 0 ? meRatingForBest.toString() : "-",
           twinRatings: {
             for (var id in twinIds)
               id: (userGroups[id]?.firstWhere(
@@ -246,7 +257,7 @@ Map<String, double> _calculateSimilarity(
         if ((meRating - twinRating).abs() <= 0.5) {
           rows.add(TwinComparisonRow(
             foodName: meal,
-            meDisplay: "$meal ($meRating)",
+            meDisplay: meRating.toString(),
             twinRatings: {
               for (var id in twinIds)
                 id: (userGroups[id]?.firstWhere(

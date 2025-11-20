@@ -12,6 +12,13 @@ class TwinComparisonPopup extends StatelessWidget {
     return id.length > 6 ? id.substring(0, 6) : id;
   }
 
+  /// Helper to truncate long meal names with ellipsis
+  String truncateMeal(String name, {int max = 24}) {
+    if (name.length <= max) return name;
+    if (max <= 1) return name.substring(0, max);
+    return '${name.substring(0, max - 1)}…';
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -21,6 +28,9 @@ class TwinComparisonPopup extends StatelessWidget {
         child: DataTable(
           columnSpacing: 16.0, // reduce spacing between columns
           columns: [
+            const DataColumn(
+              label: Text("Meal", style: TextStyle(fontSize: 12)),
+            ),
             const DataColumn(
               label: Text("Me", style: TextStyle(fontSize: 12)),
             ),
@@ -36,9 +46,19 @@ class TwinComparisonPopup extends StatelessWidget {
           rows: rows.map((row) {
             return DataRow(
               color: row.highlight
-                  ? MaterialStateProperty.all(Colors.yellow[100])
+                  ? WidgetStateProperty.all(Colors.yellow[100])
                   : null,
               cells: [
+                DataCell(
+                  Tooltip(
+                    message: row.foodName,
+                    child: Text(
+                      truncateMeal(row.foodName),
+                      style: const TextStyle(fontSize: 11),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
                 DataCell(
                   Text(
                     row.meDisplay,

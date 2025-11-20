@@ -6,10 +6,10 @@ class UserResultsCard extends StatelessWidget {
   final String query;
 
   const UserResultsCard({
-    Key? key,
+    super.key,
     required this.userDocs,
     required this.query,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -24,13 +24,14 @@ class DashboardSuggestionCard extends StatelessWidget {
               final service = TastefulTwinService();
               final rows = await service.getTwinComparisonTable(userId);
 
-              // extract twinIds from rows (first 3 highlight rows)
-              final twinIds = rows
-                  .where((r) => r.highlight)
-                  .map((r) => r.twinRatings.keys)
-                  .expand((ids) => ids)
-                  .toSet()
-                  .toList();
+              // extract twinIds preserving insertion order from first highlighted row
+              List<String> twinIds = [];
+              final highlighted = rows.where((r) => r.highlight);
+              if (highlighted.isNotEmpty) {
+                twinIds = highlighted.first.twinRatings.keys.toList();
+              } else if (rows.isNotEmpty) {
+                twinIds = rows.first.twinRatings.keys.toList();
+              }
 
               showDialog(
                 context: context,

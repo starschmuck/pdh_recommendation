@@ -7,8 +7,7 @@ import 'package:url_launcher/url_launcher.dart'; // NEW
 class IndividualSuggestionCard extends StatelessWidget {
   final DocumentSnapshot doc;
 
-  const IndividualSuggestionCard({Key? key, required this.doc})
-      : super(key: key);
+  const IndividualSuggestionCard({super.key, required this.doc});
 
   Future<String> _fetchAuthorName(String? userId) async {
     if (userId == null || userId.isEmpty) return 'Anonymous';
@@ -16,7 +15,7 @@ class IndividualSuggestionCard extends StatelessWidget {
       final userDoc =
           await FirebaseFirestore.instance.collection('users').doc(userId).get();
       if (userDoc.exists) {
-        final data = userDoc.data() as Map<String, dynamic>?;
+        final data = userDoc.data();
         return data?['name'] ?? 'Anonymous';
       }
     } catch (_) {}
@@ -38,7 +37,7 @@ class IndividualSuggestionCard extends StatelessWidget {
     final recipeLink = (data['recipeLink'] as String?)?.trim(); // NEW
 
     // Helpers (local)
-    String _labelFor(String url) {
+    String labelFor(String url) {
       try {
         final u = Uri.parse(url);
         if (u.hasAuthority && u.host.isNotEmpty) return 'Recipe: ${u.host}';
@@ -46,7 +45,7 @@ class IndividualSuggestionCard extends StatelessWidget {
       return 'View recipe';
     }
 
-    Future<void> _openRecipe(String url) async {
+    Future<void> openRecipe(String url) async {
       final uri = Uri.tryParse(url);
       if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) return;
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -115,7 +114,7 @@ class IndividualSuggestionCard extends StatelessWidget {
             if (recipeLink != null && recipeLink.isNotEmpty) ...[
               const SizedBox(height: 8.0),
               GestureDetector(
-                onTap: () => _openRecipe(recipeLink),
+                onTap: () => openRecipe(recipeLink),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -123,7 +122,7 @@ class IndividualSuggestionCard extends StatelessWidget {
                     const SizedBox(width: 6.0),
                     Flexible(
                       child: Text(
-                        _labelFor(recipeLink),
+                        labelFor(recipeLink),
                         style: const TextStyle(
                           fontSize: 12.0,
                           color: Colors.blue,

@@ -6,7 +6,7 @@ import 'package:timeago/timeago.dart' as timeago;
 class IndividualReviewCard extends StatefulWidget {
   final DocumentSnapshot doc;
 
-  const IndividualReviewCard({Key? key, required this.doc}) : super(key: key);
+  const IndividualReviewCard({super.key, required this.doc});
 
   @override
   State<IndividualReviewCard> createState() => _IndividualReviewCardState();
@@ -201,11 +201,11 @@ class StarRating extends StatelessWidget {
   final Color color;
 
   const StarRating({
-    Key? key,
+    super.key,
     required this.rating,
     this.starCount = 5,
     this.color = Colors.amber,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

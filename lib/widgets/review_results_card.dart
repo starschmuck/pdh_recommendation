@@ -7,10 +7,10 @@ class ReviewResultsCard extends StatelessWidget {
   final String query;
 
   const ReviewResultsCard({
-    Key? key,
+    super.key,
     required this.reviewDocs,
     required this.query,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
